@@ -27,6 +27,22 @@ namespace AkhmetshinChudoShoes
 
             var current = _context.Products.ToList();
 
+            DateTime lastMonth = DateTime.Now.AddMonths(-1);
+
+            // Находим ID товаров, на которые БЫЛИ заказы в прошлом месяце
+            var productsWithOrders = _context.OrderProducts
+                .Where(op => op.Orders.OrderDate.Month == lastMonth.Month &&
+                             op.Orders.OrderDate.Year == lastMonth.Year)
+                .Select(op => op.StockItems.ProductID)
+                .Distinct()
+                .ToList();
+
+            // Проставляем флаг каждому товару
+            foreach (var product in current)
+            {
+                product.HasOrdersLastMonth = productsWithOrders.Contains(product.ProductID);
+            }
+
             if (!string.IsNullOrWhiteSpace(TBoxSearch.Text))
             {
                 string text = TBoxSearch.Text.ToLower().Trim();
@@ -85,27 +101,6 @@ namespace AkhmetshinChudoShoes
 
             SelectSizeWindow window = new SelectSizeWindow(selectedProduct);
             window.ShowDialog();
-        }
-    }
-
-    public partial class Products
-    {
-
-        public int TotalStock { get { return StockItems != null ? StockItems.Sum(s => s.QuantityForOrders) : 0; } }
-        public string StockText { get { return TotalStock > 5 ? "Много" : "Мало"; } }
-        public bool IsLowStock { get { return TotalStock <= 3; } }
-
-        public decimal FinalPrice
-        {
-            get
-            {
-                var context = AkhmetshinDBShoesEntities.GetContext();
-                DateTime lastMonth = DateTime.Now.AddMonths(-1);
-                bool hasOrders = context.OrderProducts.Any(op => op.StockItems.ProductID == ProductID &&
-                                                                  op.Orders.OrderDate.Month == lastMonth.Month &&
-                                                                  op.Orders.OrderDate.Year == lastMonth.Year);
-                return hasOrders ? ProductPrice : ProductPrice * 0.75m;
-            }
         }
     }
 }

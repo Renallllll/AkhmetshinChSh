@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -9,6 +10,7 @@ namespace AkhmetshinChudoShoes
         private AkhmetshinDBShoesEntities _context = AkhmetshinDBShoesEntities.GetContext();
 
         private Orders _currentOrder;
+        private bool _isLoading = true;
 
         public OrderCompositionWindow(Orders selectedOrder)
         {
@@ -21,9 +23,25 @@ namespace AkhmetshinChudoShoes
             {
                 DatePickerOrder.Visibility = Visibility.Hidden;
                 BtnDeleteItem.Visibility = Visibility.Hidden;
+                BtnSaveDate.Visibility = Visibility.Hidden;
             }
 
             UpdateGrid();
+            _isLoading = false;
+        }
+
+        // ДОБАВЛЕНО: Откат несохраненных изменений при закрытии окна
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            try
+            {
+                if (_currentOrder != null && _context.Entry(_currentOrder).State == System.Data.Entity.EntityState.Modified)
+                {
+                    _context.Entry(_currentOrder).Reload();
+                }
+            }
+            catch { }
         }
 
         private void UpdateGrid()
@@ -49,11 +67,46 @@ namespace AkhmetshinChudoShoes
 
         private void DatePickerOrder_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (DatePickerOrder.SelectedDate.HasValue && _currentOrder != null)
+            if (_isLoading || !DatePickerOrder.SelectedDate.HasValue) return;
+
+            if (DatePickerOrder.SelectedDate.Value.Date > DateTime.Now.Date)
+            {
+                MessageBox.Show("Дата заказа не может быть в будущем!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                _isLoading = true;
+                DatePickerOrder.SelectedDate = _currentOrder.OrderDate;
+                _isLoading = false;
+                BtnSaveDate.IsEnabled = false;
+                return;
+            }
+
+            if (DatePickerOrder.SelectedDate.Value.Date != _currentOrder.OrderDate.Date)
+            {
+                BtnSaveDate.IsEnabled = true;
+            }
+            else
+            {
+                BtnSaveDate.IsEnabled = false;
+            }
+        }
+
+        private void BtnSaveDate_Click(object sender, RoutedEventArgs e)
+        {
+            if (!DatePickerOrder.SelectedDate.HasValue) return;
+
+            try
             {
                 _currentOrder.OrderDate = DatePickerOrder.SelectedDate.Value;
-                _context.SaveChanges(); // Сохраняем в БД
-                UpdateGrid(); // Обновляем заголовок
+                _context.SaveChanges();
+
+                UpdateGrid();
+                BtnSaveDate.IsEnabled = false;
+
+                MessageBox.Show("Дата заказа успешно обновлена!", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при сохранении даты: " + ex.Message, "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -68,18 +121,16 @@ namespace AkhmetshinChudoShoes
 
             if (MessageBox.Show("Удалить эту позицию из заказа?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
-                // Возвращаем на склад
                 var stockItem = _context.StockItems.FirstOrDefault(si => si.PositionID == selectedItem.PositionID);
                 if (stockItem != null)
                 {
                     stockItem.QuantityForOrders += selectedItem.Quantity;
                 }
 
-                // Удаляем из заказа
                 _context.OrderProducts.Remove(selectedItem);
                 _context.SaveChanges();
 
-                UpdateGrid(); // Обновляем таблицу и сумму
+                UpdateGrid();
             }
         }
     }

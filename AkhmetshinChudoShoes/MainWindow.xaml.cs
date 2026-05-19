@@ -50,8 +50,11 @@ namespace AkhmetshinChudoShoes
 
         private void btnBack_Click(object sender, RoutedEventArgs e)
         {
-            if (Manager.MainFrame.CanGoBack)
+            btnBack.Visibility = Visibility.Hidden;
+            if (Manager.MainFrame.CanGoBack) {
+                btnBack.Visibility = Visibility.Visible;
                 Manager.MainFrame.GoBack();
+            }
         }
 
         private void BtnLogout_Click(object sender, RoutedEventArgs e)

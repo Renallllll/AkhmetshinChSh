@@ -11,7 +11,8 @@ namespace AkhmetshinChudoShoes
 {
     using System;
     using System.Collections.Generic;
-    
+    using System.Linq;
+
     public partial class Products
     {
         public Products()
@@ -43,6 +44,16 @@ namespace AkhmetshinChudoShoes
                 else
                     return "ProductPhoto/" + ProductImage;
             }
+        }
+        public int TotalStock { get { return StockItems != null ? StockItems.Sum(s => s.QuantityForOrders) : 0; } }
+        public string StockText { get { return TotalStock > 5 ? "Много" : "Мало"; } }
+        public bool IsLowStock { get { return TotalStock <= 3; } }
+
+        public bool HasOrdersLastMonth { get; set; }
+
+        public decimal FinalPrice
+        {
+            get { return HasOrdersLastMonth ? ProductPrice : Math.Round(ProductPrice * 0.75m, 2); }
         }
 
         public virtual Categorys Categorys { get; set; }
