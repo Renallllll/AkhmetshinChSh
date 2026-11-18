@@ -1,0 +1,31 @@
+﻿<Window x:Class="AkhmetshinChudoShoes.SelectSizeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Выбор размера" Height="450" Width="450" WindowStartupLocation="CenterScreen" FontFamily="Calibri">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Name="TBlockProductName" Text="Выберите размер" FontSize="18" FontWeight="Bold" Margin="0,0,0,10" TextWrapping="Wrap"/>
+
+        <DataGrid Name="SizesGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
+                  SelectionMode="Single" HeadersVisibility="Column" CanUserAddRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Размер" Binding="{Binding Sizes.Size}" Width="100"/>
+                <DataGridTextColumn Header="В наличии (пар)" Binding="{Binding QuantityForOrders}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,15,0,0" HorizontalAlignment="Center">
+            <TextBlock Text="Количество:" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBox Name="TBoxQuantity" Text="1" Width="60" Height="25" FontSize="16" TextAlignment="Center"/>
+        </StackPanel>
+
+        <Button Name="BtnAdd" Content="Добавить в корзину" Grid.Row="3" Width="200" Height="40" Margin="0,15,0,0" 
+                HorizontalAlignment="Center" Click="BtnAdd_Click" FontWeight="Bold" Cursor="Hand"/>
+    </Grid>
+</Window>

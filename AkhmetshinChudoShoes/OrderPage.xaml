@@ -1,0 +1,82 @@
+﻿<Page x:Class="AkhmetshinChudoShoes.OrderPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Заказы" FontFamily="Calibri" IsVisibleChanged="Page_IsVisibleChanged">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <WrapPanel Name="FilterPanel" Grid.Row="0" Orientation="Horizontal" Margin="10">
+            <StackPanel Orientation="Horizontal" Margin="0,0,15,0">
+                <TextBlock Text="Поиск:" VerticalAlignment="Center" Margin="5"/>
+                <TextBox Name="TBoxSearch" Width="150" Height="25" TextChanged="TBoxSearch_TextChanged"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,15,0">
+                <TextBlock Text="Сортировка:" VerticalAlignment="Center" Margin="5"/>
+                <ComboBox Name="ComboSort" Width="150" Height="25" SelectionChanged="ComboSort_SelectionChanged">
+                    <ComboBoxItem Content="Без сортировки" IsSelected="True"/>
+                    <ComboBoxItem Content="По цене (возр.)"/>
+                    <ComboBoxItem Content="По цене (убыв.)"/>
+                </ComboBox>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Фильтр:" VerticalAlignment="Center" Margin="5"/>
+                <ComboBox Name="ComboFilter" Width="150" Height="25" SelectionChanged="ComboFilter_SelectionChanged"/>
+            </StackPanel>
+        </WrapPanel>
+
+        <ListView Name="OrderListView" Grid.Row="1" HorizontalContentAlignment="Stretch">
+            <ListView.ItemTemplate>
+                <DataTemplate>
+                    <Border MaxWidth="1800" MinWidth="1450" BorderThickness="1" BorderBrush="Black" CornerRadius="8" Margin="10,5" Padding="10">
+                        
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Background" Value="#FFFFFF"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsLowStock}" Value="True">
+                                        <Setter Property="Background" Value="#FFB3B3"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- ТВОЙ РОДНОЙ БИНДИНГ -->
+                            <Image Source="{Binding ProductPhoto}" Grid.Column="0" Grid.RowSpan="3" Stretch="Uniform"/>
+
+                            <StackPanel Grid.RowSpan="3" Grid.Column="1" Margin="5">
+                                <TextBlock Text="{Binding ProductName}" FontSize="20" FontFamily="Calibri" FontWeight="Bold"/>
+                                <TextBlock Text="{Binding ProductDescription, StringFormat={}Описание: {0}}" TextWrapping="Wrap" FontSize="17" FontFamily="Calibri"/>
+                                <TextBlock Text="{Binding ProductStructure, StringFormat={}Состав: {0}}" FontFamily="Calibri" FontSize="17" TextWrapping="Wrap"/>
+                                <TextBlock Text="{Binding CategoryName, StringFormat={}Категория: {0}}" FontFamily="Calibri" FontSize="17"/>
+
+                                <!-- ДОБАВЛЕНО: Много/Мало -->
+                                <TextBlock Text="{Binding StockText, StringFormat={}Количество: {0}}" FontFamily="Calibri" FontSize="17" FontWeight="SemiBold"/>
+
+                                <!-- ИЗМЕНЕНО: FinalPrice вместо ProductPrice -->
+                                <TextBlock Text="{Binding FinalPrice, StringFormat={}Цена: {0} руб.}" FontFamily="Calibri" FontSize="20" FontWeight="Bold" Foreground="Red"/>
+
+                                <Button Name="OrderBtn" Click="OrderBtn_Click" Content="Заказать" Width="120" Height="35" Margin="0,10,0,0" Cursor="Hand" HorizontalAlignment="Left"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+        </ListView>
+    </Grid>
+</Page>

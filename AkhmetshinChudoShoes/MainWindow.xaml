@@ -1,0 +1,34 @@
+﻿<Window x:Class="AkhmetshinChudoShoes.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AkhmetshinChudoShoes"
+        mc:Ignorable="d"
+        Title="Чудо обувь" Height="450" Width="800" FontFamily="Calibri" Icon="/ProductPhoto/ЧудоОбувь.ico" MinHeight="600" MinWidth="1550" WindowState="Maximized">
+    <Grid>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="110"/>
+                <RowDefinition/>
+                <RowDefinition Height="50"/>
+            </Grid.RowDefinitions>
+
+            <Image Source="/ProductPhoto/ЧудоОбувь.png" Grid.Row="0" HorizontalAlignment="Left"/>
+            <TextBlock Text="Чудо обувь" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
+
+            <Button Content="Назад" Name="btnBack" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0" Click="btnBack_Click" Width="100" Height="30" Cursor="Hand"/>
+            <Frame Grid.Row="1" Name="MainFrame" ContentRendered="MainFrame_ContentRendered" NavigationUIVisibility="Hidden"/>
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center">
+                <Button Content="Каталог" Name="BtnCatalog" Width="100" Height="30" Margin="0,0,10,0" Click="BtnCatalog_Click" Cursor="Hand"/>
+                <Button Content="Корзина" Name="BtnCart" Width="100" Height="30" Margin="0,0,10,0" Click="BtnCart_Click" Cursor="Hand"/>
+                <Button Content="Заказы" Name="BtnOrders" Width="100" Height="30" Click="BtnOrders_Click" Cursor="Hand" />
+            </StackPanel>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">
+                <TextBlock Name="TBlockUserInfo" Text="Гость" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                <Button Name="BtnLogout" Content="Выйти" Width="80" Height="30" Click="BtnLogout_Click" Cursor="Hand"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
