@@ -18,7 +18,6 @@ namespace AkhmetshinChudoShoes
         {
             InitializeComponent();
 
-            // По умолчанию: с 1-го числа текущего месяца по сегодняшний день
             DateTime now = DateTime.Now;
             DatePickerStart.SelectedDate = new DateTime(now.Year, now.Month, 1);
             DatePickerEnd.SelectedDate = now;
@@ -47,11 +46,10 @@ namespace AkhmetshinChudoShoes
                 return;
             }
 
-            // Берем даты
             DateTime start = DatePickerStart.SelectedDate.Value;
             DateTime end = DatePickerEnd.SelectedDate.Value;
 
-            // ВАЛИДАЦИЯ (КИМ п.4)
+            // ВАЛИДАЦИЯ
             if (start > end)
             {
                 TBlockTotalOrders.Text = "-";
@@ -60,17 +58,14 @@ namespace AkhmetshinChudoShoes
                 return;
             }
 
-            // Теперь мы точно знаем, что end - это нормальная дата, и AddDays(1) не вылетит!
             DateTime endDateInclusive = end.AddDays(1);
 
-            // 1. Общее количество заказов
             var ordersInPeriod = _context.Orders
                 .Where(o => o.OrderDate >= start && o.OrderDate < endDateInclusive)
                 .ToList();
 
             TBlockTotalOrders.Text = ordersInPeriod.Count.ToString();
 
-            // 2. Общая сумма продаж (считаем по позициям, привязанным к заказам периода)
             var orderProductsInPeriod = _context.OrderProducts
                 .Where(op => op.Orders.OrderDate >= start && op.Orders.OrderDate < endDateInclusive)
                 .ToList();
@@ -78,9 +73,8 @@ namespace AkhmetshinChudoShoes
             decimal totalSum = orderProductsInPeriod
                 .Sum(op => op.Quantity * op.StockItems.Products.ProductPrice);
 
-            TBlockTotalSum.Text = totalSum.ToString("F2"); // Вывод с двумя знаками после запятой
+            TBlockTotalSum.Text = totalSum.ToString("F2");
 
-            // 3. Топ-5 моделей
             var topProducts = orderProductsInPeriod
                 .GroupBy(op => op.StockItems.Products)
                 .Select(g => new
@@ -96,7 +90,7 @@ namespace AkhmetshinChudoShoes
             TopProductsGrid.ItemsSource = topProducts;
         }
 
-        // ЭКСПОРТ В PDF (КИМ п.3)
+        // ЭКСПОРТ В PDF
         private void BtnExportPdf_Click(object sender, RoutedEventArgs e)
         {
             DateTime start = DatePickerStart.SelectedDate ?? DateTime.MinValue;
@@ -148,7 +142,6 @@ namespace AkhmetshinChudoShoes
                 // Вывод строк
                 foreach (var item in TopProductsGrid.Items)
                 {
-                    // Используем dynamic, чтобы получить данные из анонимного типа Grid'а
                     dynamic row = item;
                     gfx.DrawString(row.ProductName.ToString(), fontText, XBrushes.Black, 40, y);
                     gfx.DrawString(row.ManufacturerName.ToString(), fontText, XBrushes.Black, 300, y);

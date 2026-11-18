@@ -56,7 +56,6 @@
                                 <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
 
-                            <!-- ТВОЙ РОДНОЙ БИНДИНГ -->
                             <Image Source="{Binding ProductPhoto}" Grid.Column="0" Grid.RowSpan="3" Stretch="Uniform"/>
 
                             <StackPanel Grid.RowSpan="3" Grid.Column="1" Margin="5">
@@ -65,10 +64,8 @@
                                 <TextBlock Text="{Binding ProductStructure, StringFormat={}Состав: {0}}" FontFamily="Calibri" FontSize="17" TextWrapping="Wrap"/>
                                 <TextBlock Text="{Binding CategoryName, StringFormat={}Категория: {0}}" FontFamily="Calibri" FontSize="17"/>
 
-                                <!-- ДОБАВЛЕНО: Много/Мало -->
                                 <TextBlock Text="{Binding StockText, StringFormat={}Количество: {0}}" FontFamily="Calibri" FontSize="17" FontWeight="SemiBold"/>
 
-                                <!-- ИЗМЕНЕНО: FinalPrice вместо ProductPrice -->
                                 <TextBlock Text="{Binding FinalPrice, StringFormat={}Цена: {0} руб.}" FontFamily="Calibri" FontSize="20" FontWeight="Bold" Foreground="Red"/>
 
                                 <Button Name="OrderBtn" Click="OrderBtn_Click" Content="Заказать" Width="120" Height="35" Margin="0,10,0,0" Cursor="Hand" HorizontalAlignment="Left"/>

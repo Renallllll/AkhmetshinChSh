@@ -19,7 +19,6 @@ namespace AkhmetshinChudoShoes
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
-            // Активируем бесплатную AGPL-лицензию для PdfSharp
             PdfSharp.PdfSharpLicense.SetAgplLicense();
             GlobalFontSettings.FontResolver = new FailsafeFontResolver();
         }

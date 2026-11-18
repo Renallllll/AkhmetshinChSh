@@ -14,7 +14,6 @@ namespace AkhmetshinChudoShoes
             UpdateOrders();
         }
 
-        // ТВОЙ РОДНОЙ КОД (не тронут)
         private void UpdateOrders()
         {
             var orders = _context.Orders.ToList();
@@ -29,7 +28,6 @@ namespace AkhmetshinChudoShoes
             }
         }
 
-        // ТВОЙ РОДНОЙ КОД (не тронут)
         private void ViewCompositionBtn_Click(object sender, RoutedEventArgs e)
         {
             var selectedOrder = (sender as Button).DataContext as Orders;
@@ -40,7 +38,6 @@ namespace AkhmetshinChudoShoes
             UpdateOrders();
         }
 
-        // ТВОЙ РОДНОЙ КОД (не тронут)
         private void DeleteOrderBtn_Click(object sender, RoutedEventArgs e)
         {
             var selectedOrder = (sender as Button).DataContext as Orders;
@@ -72,7 +69,6 @@ namespace AkhmetshinChudoShoes
             }
         }
 
-        // ДОБАВЛЕНО: Создание заказа Менеджером/Админом
         private void BtnCreateOrder_Click(object sender, RoutedEventArgs e)
         {
             Window selectWindow = new Window
@@ -85,7 +81,6 @@ namespace AkhmetshinChudoShoes
 
             StackPanel panel = new StackPanel { Margin = new Thickness(10) };
 
-            // ПОДСКАЗКА 1: Что делать в этом окне
             TextBlock tbHint = new TextBlock
             {
                 Text = "Шаг 1: Выберите клиента, для которого оформляется заказ:",
@@ -119,13 +114,12 @@ namespace AkhmetshinChudoShoes
 
                 selectWindow.Close();
 
-                // ПОДСКАЗКА 2: Что делать дальше
                 MessageBox.Show($"Клиент выбран. Сейчас откроется каталог. Добавьте нужные товары в корзину и перейдите в раздел 'Корзина' для оформления.", "Переход в каталог", MessageBoxButton.OK, MessageBoxImage.Information);
 
                 Manager.MainFrame.Navigate(new OrderPage());
             };
 
-            panel.Children.Add(tbHint); // Добавили подсказку
+            panel.Children.Add(tbHint);
             panel.Children.Add(lbClients);
             panel.Children.Add(btnSelect);
             selectWindow.Content = panel;

@@ -8,7 +8,6 @@ namespace AkhmetshinChudoShoes
     {
         private AkhmetshinDBShoesEntities _context = AkhmetshinDBShoesEntities.GetContext();
 
-        // ДОБАВЛЕНО: Сохраняем заказ, чтобы менять его дату и обновлять
         private Orders _currentOrder;
 
         public OrderCompositionWindow(Orders selectedOrder)
@@ -16,20 +15,17 @@ namespace AkhmetshinChudoShoes
             InitializeComponent();
             _currentOrder = selectedOrder;
 
-            // Заполняем дату в DatePicker (ДОБАВЛЕНО)
             DatePickerOrder.SelectedDate = selectedOrder.OrderDate;
 
-            // ПРОВЕРКА РОЛИ (ДОБАВЛЕНО): Если не Админ, скрываем элементы редактирования
             if (Manager.CurrentUser == null || Manager.CurrentUser.RoleID != 1)
             {
                 DatePickerOrder.Visibility = Visibility.Hidden;
                 BtnDeleteItem.Visibility = Visibility.Hidden;
             }
 
-            UpdateGrid(); // Вызываем новый метод вместо старого кода
+            UpdateGrid();
         }
 
-        // ВЫНЕСЕНО В ОТДЕЛЬНЫЙ МЕТОД, чтобы обновлять после удаления
         private void UpdateGrid()
         {
             TBlockTitle.Text = $"Состав заказа №{_currentOrder.OrderID} от {_currentOrder.OrderDate:dd.MM.yyyy}";
@@ -51,7 +47,6 @@ namespace AkhmetshinChudoShoes
             TBlockTotalSum.Text = $"{totalSum} руб.";
         }
 
-        // ДОБАВЛЕНО: Изменение даты заказа
         private void DatePickerOrder_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
         {
             if (DatePickerOrder.SelectedDate.HasValue && _currentOrder != null)
@@ -62,7 +57,6 @@ namespace AkhmetshinChudoShoes
             }
         }
 
-        // ДОБАВЛЕНО: Удаление позиции и возврат на склад
         private void BtnDeleteItem_Click(object sender, RoutedEventArgs e)
         {
             var selectedItem = CompositionGrid.SelectedItem as OrderProducts;

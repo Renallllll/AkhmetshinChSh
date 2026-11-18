@@ -8,17 +8,14 @@ namespace AkhmetshinChudoShoes
         public static Users CurrentUser { get; set; }
         public static Frame MainFrame { get; set; }
 
-        // ДОБАВЛЕНО: Клиент, на которого оформляется заказ (для Админа/Менеджера)
         public static Users OrderClient { get; set; }
 
-        // ДОБАВЛЕНО: Наша корзина
         public static List<CartItem> Cart = new List<CartItem>();
     }
 
-    // ДОБАВЛЕНО: Класс, описывающий одну строчку в корзине
     public class CartItem
     {
-        public StockItems StockItem { get; set; } // Конкретная позиция (товар + размер)
-        public int Quantity { get; set; }         // Сколько штук хотим купить
+        public StockItems StockItem { get; set; }
+        public int Quantity { get; set; }
     }
 }

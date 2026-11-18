@@ -14,8 +14,7 @@ namespace AkhmetshinChudoShoes
             InitializeComponent();
             UpdateCart();
         }
-
-        // ТВОЙ РОДНОЙ КОД (не тронут, только плашка)
+        
         private void UpdateCart()
         {
             CartGrid.ItemsSource = null;
@@ -44,7 +43,6 @@ namespace AkhmetshinChudoShoes
             if (Visibility == Visibility.Visible) UpdateCart();
         }
 
-        // ТВОЙ РОДНОЙ КОД
         private void DeleteFromCartBtn_Click(object sender, RoutedEventArgs e)
         {
             var selectedItem = CartGrid.SelectedItem as CartItem;
@@ -58,7 +56,6 @@ namespace AkhmetshinChudoShoes
             UpdateCart();
         }
 
-        // ТВОЙ РОДНОЙ КОД (с проверкой targetClientId)
         private void CheckoutBtn_Click(object sender, RoutedEventArgs e)
         {
             if (Manager.Cart.Count == 0)
@@ -114,7 +111,6 @@ namespace AkhmetshinChudoShoes
             }
         }
 
-        // ДОБАВЛЕНО: Увеличение количества
         private void PlusBtn_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;
@@ -133,7 +129,6 @@ namespace AkhmetshinChudoShoes
             }
         }
 
-        // ДОБАВЛЕНО: Уменьшение количества
         private void MinusBtn_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as Button;

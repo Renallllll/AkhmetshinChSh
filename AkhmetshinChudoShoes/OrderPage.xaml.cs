@@ -25,7 +25,6 @@ namespace AkhmetshinChudoShoes
             if (TBoxSearch == null || ComboSort == null || ComboFilter == null || OrderListView == null)
                 return;
 
-            // ТВОЙ РОДНОЙ КОД
             var current = _context.Products.ToList();
 
             if (!string.IsNullOrWhiteSpace(TBoxSearch.Text))
@@ -48,7 +47,6 @@ namespace AkhmetshinChudoShoes
             else if (ComboSort.SelectedIndex == 2)
                 current = current.OrderByDescending(p => p.FinalPrice).ToList();
 
-            // ТВОЙ РОДНОЙ ВЫВОД
             OrderListView.ItemsSource = current;
         }
 
@@ -90,7 +88,6 @@ namespace AkhmetshinChudoShoes
         }
     }
 
-    // МАГИЯ: Расширяем модель БД, чтобы XAML видел новые поля, а база не ломалась
     public partial class Products
     {
 

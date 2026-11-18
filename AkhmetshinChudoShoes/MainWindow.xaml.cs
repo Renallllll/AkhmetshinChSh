@@ -24,7 +24,7 @@ namespace AkhmetshinChudoShoes
             {
                 TBlockUserInfo.Text = "Гость";
                 BtnOrders.Visibility = Visibility.Collapsed;
-                BtnAnalytics.Visibility = Visibility.Collapsed; // Скрываем Аналитику для Гостя
+                BtnAnalytics.Visibility = Visibility.Collapsed;
             }
             else
             {
@@ -36,7 +36,6 @@ namespace AkhmetshinChudoShoes
                 else
                     BtnOrders.Visibility = Visibility.Collapsed;
 
-                // ДОБАВЛЕНО: Аналитика только для Админа (RoleID == 1)
                 if (user.RoleID == 1)
                     BtnAnalytics.Visibility = Visibility.Visible;
                 else
@@ -44,7 +43,6 @@ namespace AkhmetshinChudoShoes
             }
         }
 
-        // ДОБАВЛЕНО: Переход на страницу аналитики
         private void BtnAnalytics_Click(object sender, RoutedEventArgs e)
         {
             MainFrame.Navigate(new AnalyticsPage());
