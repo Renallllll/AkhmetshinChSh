@@ -12,5 +12,11 @@
             <Setter Property="Background" Value="#70B2AF"/>
             <Setter Property="FontSize" Value="20"/>
         </Style>
+        <Style TargetType="Window">
+            <Setter Property="FontFamily" Value="Calibri"/>
+        </Style>
+        <Style TargetType="Page">
+            <Setter Property="FontFamily" Value="Calibri"/>
+        </Style>
     </Application.Resources>
 </Application>

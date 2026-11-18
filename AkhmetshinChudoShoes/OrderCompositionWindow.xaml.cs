@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace AkhmetshinChudoShoes
 {
@@ -7,33 +8,85 @@ namespace AkhmetshinChudoShoes
     {
         private AkhmetshinDBShoesEntities _context = AkhmetshinDBShoesEntities.GetContext();
 
-        // В конструктор мы передаем заказ, который хотим посмотреть
+        // ДОБАВЛЕНО: Сохраняем заказ, чтобы менять его дату и обновлять
+        private Orders _currentOrder;
+
         public OrderCompositionWindow(Orders selectedOrder)
         {
             InitializeComponent();
+            _currentOrder = selectedOrder;
 
-            TBlockTitle.Text = $"Состав заказа №{selectedOrder.OrderID} от {selectedOrder.OrderDate:dd.MM.yyyy}";
+            // Заполняем дату в DatePicker (ДОБАВЛЕНО)
+            DatePickerOrder.SelectedDate = selectedOrder.OrderDate;
 
-            // Берем все строки из OrderProducts, которые относятся к этому заказу
+            // ПРОВЕРКА РОЛИ (ДОБАВЛЕНО): Если не Админ, скрываем элементы редактирования
+            if (Manager.CurrentUser == null || Manager.CurrentUser.RoleID != 1)
+            {
+                DatePickerOrder.Visibility = Visibility.Hidden;
+                BtnDeleteItem.Visibility = Visibility.Hidden;
+            }
+
+            UpdateGrid(); // Вызываем новый метод вместо старого кода
+        }
+
+        // ВЫНЕСЕНО В ОТДЕЛЬНЫЙ МЕТОД, чтобы обновлять после удаления
+        private void UpdateGrid()
+        {
+            TBlockTitle.Text = $"Состав заказа №{_currentOrder.OrderID} от {_currentOrder.OrderDate:dd.MM.yyyy}";
+
             var composition = _context.OrderProducts
-                .Where(op => op.OrderID == selectedOrder.OrderID)
+                .Where(op => op.OrderID == _currentOrder.OrderID)
                 .ToList();
 
-            // Считаем итоговую сумму
             decimal totalSum = 0;
             foreach (var item in composition)
             {
-                // Чтобы не было ошибки, если вдруг товар удалили (хотя мы это запретили), 
-                // берем цену с проверкой на null
                 if (item.StockItems != null && item.StockItems.Products != null)
                 {
                     totalSum += item.Quantity * item.StockItems.Products.ProductPrice;
                 }
             }
 
-            // Выводим данные
             CompositionGrid.ItemsSource = composition;
             TBlockTotalSum.Text = $"{totalSum} руб.";
+        }
+
+        // ДОБАВЛЕНО: Изменение даты заказа
+        private void DatePickerOrder_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (DatePickerOrder.SelectedDate.HasValue && _currentOrder != null)
+            {
+                _currentOrder.OrderDate = DatePickerOrder.SelectedDate.Value;
+                _context.SaveChanges(); // Сохраняем в БД
+                UpdateGrid(); // Обновляем заголовок
+            }
+        }
+
+        // ДОБАВЛЕНО: Удаление позиции и возврат на склад
+        private void BtnDeleteItem_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedItem = CompositionGrid.SelectedItem as OrderProducts;
+            if (selectedItem == null)
+            {
+                MessageBox.Show("Выберите товар для удаления!", "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            if (MessageBox.Show("Удалить эту позицию из заказа?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                // Возвращаем на склад
+                var stockItem = _context.StockItems.FirstOrDefault(si => si.PositionID == selectedItem.PositionID);
+                if (stockItem != null)
+                {
+                    stockItem.QuantityForOrders += selectedItem.Quantity;
+                }
+
+                // Удаляем из заказа
+                _context.OrderProducts.Remove(selectedItem);
+                _context.SaveChanges();
+
+                UpdateGrid(); // Обновляем таблицу и сумму
+            }
         }
     }
 }

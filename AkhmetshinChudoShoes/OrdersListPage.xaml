@@ -9,10 +9,14 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Заголовок страницы -->
-        <TextBlock Text="Список заказов" FontSize="24" FontWeight="Bold" Margin="15,10,0,10" HorizontalAlignment="Left"/>
+        <!-- ИЗМЕНЕНО: Обернули заголовок и добавили кнопку -->
+        <Grid Grid.Row="0" Margin="15,10,0,10">
+            <TextBlock Text="Список заказов" FontSize="24" FontWeight="Bold" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+            <!-- ДОБАВЛЕНО: Кнопка создания заказа -->
+            <Button Name="BtnCreateOrder" Content="Создать заказ" HorizontalAlignment="Right" Width="150" Height="30" Margin="0,0,15,0" Click="BtnCreateOrder_Click" FontWeight="Bold" Cursor="Hand"/>
+        </Grid>
 
-        <!-- Список заказов -->
+        <!-- Список заказов (ТВОЙ РОДНОЙ КОД) -->
         <ListView Name="OrdersListView" Grid.Row="1" HorizontalContentAlignment="Stretch" Margin="10">
             <ListView.ItemTemplate>
                 <DataTemplate>
@@ -20,25 +24,23 @@
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
-                                <!-- Информация о заказе -->
                                 <ColumnDefinition Width="250"/>
-                                <!-- Кнопки -->
                             </Grid.ColumnDefinitions>
-
-                            <!-- Информация -->
                             <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding OrderID, StringFormat={}Заказ № {0}}" FontSize="18" FontWeight="Bold" Foreground="Black"/>
                                 <TextBlock Text="{Binding OrderDate, StringFormat={}Дата: {0:dd.MM.yyyy}}" FontSize="16" Foreground="Gray" Margin="0,5,0,0"/>
-                                <!-- Выводим ФИО клиента (через навигационное свойство Users) -->
-                                <TextBlock Text="{Binding Users.UserLastName, StringFormat={}Клиент: {0}}" FontSize="16" Margin="0,5,0,0"/>
-                                <TextBlock Text="{Binding Users.UserFirstName, StringFormat={}Имя: {0}}" FontSize="16" Margin="0,2,0,0"/>
+                                <TextBlock FontSize="16" Margin="0,5,0,0" Foreground="Black">
+                                    <TextBlock.Text>
+                                        <MultiBinding StringFormat="Клиент: {0} {1} {2}">
+                                            <Binding Path="Users.UserLastName"/>
+                                            <Binding Path="Users.UserFirstName"/>
+                                            <Binding Path="Users.UserPytronimic"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
                             </StackPanel>
-
-                            <!-- Кнопки управления -->
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
-                                <!-- Кнопка просмотра состава -->
                                 <Button Content="Состав заказа" Height="30" Margin="0,5" Click="ViewCompositionBtn_Click" Cursor="Hand"/>
-                                <!-- Кнопка удаления -->
                                 <Button Content="Удалить заказ" Height="30" Margin="0,5" Click="DeleteOrderBtn_Click" Background="Red" Cursor="Hand"/>
                             </StackPanel>
                         </Grid>

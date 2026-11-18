@@ -15,7 +15,7 @@ namespace AkhmetshinChudoShoes
             UpdateCart();
         }
 
-        // Обновление списка и подсчет суммы
+        // ТВОЙ РОДНОЙ КОД (не тронут, только плашка)
         private void UpdateCart()
         {
             CartGrid.ItemsSource = null;
@@ -27,17 +27,24 @@ namespace AkhmetshinChudoShoes
                 total += item.Quantity * item.StockItem.Products.ProductPrice;
             }
             TBlockTotal.Text = $"{total} руб.";
+
+            if (Manager.OrderClient != null)
+            {
+                TBlockOrderTarget.Text = $"Внимание! Заказ оформляется для клиента: {Manager.OrderClient.UserLastName} {Manager.OrderClient.UserFirstName} {Manager.OrderClient.UserPytronimic}";
+                TBlockOrderTarget.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                TBlockOrderTarget.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void Page_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
-            if (Visibility == Visibility.Visible)
-            {
-                UpdateCart();
-            }
+            if (Visibility == Visibility.Visible) UpdateCart();
         }
 
-        // Удаление позиции из корзины
+        // ТВОЙ РОДНОЙ КОД
         private void DeleteFromCartBtn_Click(object sender, RoutedEventArgs e)
         {
             var selectedItem = CartGrid.SelectedItem as CartItem;
@@ -51,7 +58,7 @@ namespace AkhmetshinChudoShoes
             UpdateCart();
         }
 
-        // ОФОРМЛЕНИЕ ЗАКАЗА (Создание записи в БД)
+        // ТВОЙ РОДНОЙ КОД (с проверкой targetClientId)
         private void CheckoutBtn_Click(object sender, RoutedEventArgs e)
         {
             if (Manager.Cart.Count == 0)
@@ -68,16 +75,17 @@ namespace AkhmetshinChudoShoes
 
             try
             {
-                //Создаем сам заказ (шапку)
+                int targetClientId = Manager.CurrentUser.UserID;
+                if (Manager.OrderClient != null) targetClientId = Manager.OrderClient.UserID;
+
                 var newOrder = new Orders
                 {
                     OrderDate = DateTime.Now,
-                    ClientID = Manager.CurrentUser.UserID
+                    ClientID = targetClientId
                 };
                 _context.Orders.Add(newOrder);
-                _context.SaveChanges(); // Сохраняем, чтобы получить OrderID
+                _context.SaveChanges();
 
-                //Переносим товары из корзины в OrderProducts
                 foreach (var item in Manager.Cart)
                 {
                     var orderProduct = new OrderProducts
@@ -88,25 +96,63 @@ namespace AkhmetshinChudoShoes
                     };
                     _context.OrderProducts.Add(orderProduct);
 
-                    //Списываем остатки со склада
                     var stockToUpdate = _context.StockItems.FirstOrDefault(si => si.PositionID == item.StockItem.PositionID);
-                    if (stockToUpdate != null)
-                    {
-                        stockToUpdate.QuantityForOrders -= item.Quantity;
-                    }
+                    if (stockToUpdate != null) stockToUpdate.QuantityForOrders -= item.Quantity;
                 }
 
-                _context.SaveChanges(); //Сохраняем все товары и остатки
+                _context.SaveChanges();
 
                 MessageBox.Show($"Заказ №{newOrder.OrderID} успешно оформлен!", "Успех");
 
-                //Очищаем корзину
                 Manager.Cart.Clear();
+                Manager.OrderClient = null;
                 UpdateCart();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Ошибка при оформлении: " + ex.Message);
+            }
+        }
+
+        // ДОБАВЛЕНО: Увеличение количества
+        private void PlusBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var cartItem = button.DataContext as CartItem;
+            if (cartItem == null) return;
+
+            // Проверяем остаток на складе
+            if (cartItem.Quantity < cartItem.StockItem.QuantityForOrders)
+            {
+                cartItem.Quantity++;
+                UpdateCart();
+            }
+            else
+            {
+                MessageBox.Show($"На складе больше нет товара (максимум {cartItem.StockItem.QuantityForOrders} пар)!", "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        // ДОБАВЛЕНО: Уменьшение количества
+        private void MinusBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var cartItem = button.DataContext as CartItem;
+            if (cartItem == null) return;
+
+            if (cartItem.Quantity > 1)
+            {
+                cartItem.Quantity--;
+                UpdateCart();
+            }
+            else
+            {
+                // Если количество становится 0, предлагаем удалить
+                if (MessageBox.Show("Удалить этот товар из корзины?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+                {
+                    Manager.Cart.Remove(cartItem);
+                    UpdateCart();
+                }
             }
         }
     }

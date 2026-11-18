@@ -8,6 +8,9 @@ namespace AkhmetshinChudoShoes
         public static Users CurrentUser { get; set; }
         public static Frame MainFrame { get; set; }
 
+        // ДОБАВЛЕНО: Клиент, на которого оформляется заказ (для Админа/Менеджера)
+        public static Users OrderClient { get; set; }
+
         // ДОБАВЛЕНО: Наша корзина
         public static List<CartItem> Cart = new List<CartItem>();
     }

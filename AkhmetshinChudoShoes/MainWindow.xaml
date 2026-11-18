@@ -22,7 +22,8 @@
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center">
                 <Button Content="Каталог" Name="BtnCatalog" Width="100" Height="30" Margin="0,0,10,0" Click="BtnCatalog_Click" Cursor="Hand"/>
                 <Button Content="Корзина" Name="BtnCart" Width="100" Height="30" Margin="0,0,10,0" Click="BtnCart_Click" Cursor="Hand"/>
-                <Button Content="Заказы" Name="BtnOrders" Width="100" Height="30" Click="BtnOrders_Click" Cursor="Hand" />
+                <Button Content="Заказы" Name="BtnOrders" Width="100" Height="30" Margin="0,0,10,0" Click="BtnOrders_Click" Cursor="Hand" />
+                <Button Content="Аналитика" Name="BtnAnalytics" Width="100" Height="30" Click="BtnAnalytics_Click" Cursor="Hand"/>
             </StackPanel>
 
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0">

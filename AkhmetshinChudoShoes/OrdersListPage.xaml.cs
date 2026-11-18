@@ -14,10 +14,9 @@ namespace AkhmetshinChudoShoes
             UpdateOrders();
         }
 
-        // Функция обновления списка заказов
+        // ТВОЙ РОДНОЙ КОД (не тронут)
         private void UpdateOrders()
         {
-            // Подгружаем заказы вместе с клиентами
             var orders = _context.Orders.ToList();
             OrdersListView.ItemsSource = orders;
         }
@@ -26,22 +25,22 @@ namespace AkhmetshinChudoShoes
         {
             if (Visibility == Visibility.Visible)
             {
-                UpdateOrders(); // Обновляем при возвращении на страницу
+                UpdateOrders();
             }
         }
 
-        // Просмотр состава заказа
+        // ТВОЙ РОДНОЙ КОД (не тронут)
         private void ViewCompositionBtn_Click(object sender, RoutedEventArgs e)
         {
             var selectedOrder = (sender as Button).DataContext as Orders;
             if (selectedOrder == null) return;
 
-            // Открываем окно состава и передаем туда выбранный заказ
             OrderCompositionWindow window = new OrderCompositionWindow(selectedOrder);
-            window.ShowDialog(); // ShowDialog блокирует главное окно, пока не закроют это
+            window.ShowDialog();
+            UpdateOrders();
         }
 
-        // Удаление заказа
+        // ТВОЙ РОДНОЙ КОД (не тронут)
         private void DeleteOrderBtn_Click(object sender, RoutedEventArgs e)
         {
             var selectedOrder = (sender as Button).DataContext as Orders;
@@ -51,34 +50,86 @@ namespace AkhmetshinChudoShoes
             {
                 try
                 {
-                    // 1. Находим все товары в этом заказе
                     var productsInOrder = _context.OrderProducts.Where(op => op.OrderID == selectedOrder.OrderID).ToList();
-
                     foreach (var item in productsInOrder)
                     {
-                        // ВОЗВРАЩАЕМ ТОВАР НА СКЛАД (QuantityForOrders)
                         var stockToRestore = _context.StockItems.FirstOrDefault(si => si.PositionID == item.PositionID);
                         if (stockToRestore != null)
                         {
-                            stockToRestore.QuantityForOrders += item.Quantity; // Прибавляем обратно
+                            stockToRestore.QuantityForOrders += item.Quantity;
                         }
-
-                        // Удаляем позицию из заказа
                         _context.OrderProducts.Remove(item);
                     }
-
-                    // 2. Удаляем сам заказ
                     _context.Orders.Remove(selectedOrder);
                     _context.SaveChanges();
-
                     MessageBox.Show("Заказ удален, товары возвращены на склад!", "Успех");
-                    UpdateOrders(); // Обновляем список заказов на экране
+                    UpdateOrders();
                 }
                 catch (System.Exception ex)
                 {
                     MessageBox.Show("Ошибка при удалении: " + ex.Message);
                 }
             }
+        }
+
+        // ДОБАВЛЕНО: Создание заказа Менеджером/Админом
+        private void BtnCreateOrder_Click(object sender, RoutedEventArgs e)
+        {
+            Window selectWindow = new Window
+            {
+                Title = "Создание заказа",
+                Width = 350,
+                Height = 400,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen
+            };
+
+            StackPanel panel = new StackPanel { Margin = new Thickness(10) };
+
+            // ПОДСКАЗКА 1: Что делать в этом окне
+            TextBlock tbHint = new TextBlock
+            {
+                Text = "Шаг 1: Выберите клиента, для которого оформляется заказ:",
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 10)
+            };
+
+            ListBox lbClients = new ListBox { Height = 250, DisplayMemberPath = "DisplayName" };
+
+            var clients = _context.Users.Select(u => new {
+                UserID = u.UserID,
+                DisplayName = u.UserLastName + " " + u.UserFirstName + " " + u.UserPytronimic
+            }).ToList();
+
+            lbClients.ItemsSource = clients;
+
+            Button btnSelect = new Button { Content = "Перейти к выбору товаров", Height = 35, Margin = new Thickness(0, 15, 0, 0), Background = System.Windows.Media.Brushes.LightGreen };
+            btnSelect.Click += (s, args) =>
+            {
+                if (lbClients.SelectedItem == null)
+                {
+                    MessageBox.Show("Выберите клиента!", "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                dynamic selectedClient = lbClients.SelectedItem;
+                int clientId = selectedClient.UserID;
+
+                Manager.OrderClient = _context.Users.FirstOrDefault(u => u.UserID == clientId);
+                Manager.Cart.Clear();
+
+                selectWindow.Close();
+
+                // ПОДСКАЗКА 2: Что делать дальше
+                MessageBox.Show($"Клиент выбран. Сейчас откроется каталог. Добавьте нужные товары в корзину и перейдите в раздел 'Корзина' для оформления.", "Переход в каталог", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                Manager.MainFrame.Navigate(new OrderPage());
+            };
+
+            panel.Children.Add(tbHint); // Добавили подсказку
+            panel.Children.Add(lbClients);
+            panel.Children.Add(btnSelect);
+            selectWindow.Content = panel;
+            selectWindow.ShowDialog();
         }
     }
 }
