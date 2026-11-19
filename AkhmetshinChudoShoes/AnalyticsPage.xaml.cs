@@ -1,12 +1,10 @@
-﻿using PdfSharp.Drawing;
-using PdfSharp.Pdf;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Media;
-using System.Xml.Linq;
+using System.Collections.Generic;
+using PdfSharp.Pdf;
+using PdfSharp.Drawing;
 
 namespace AkhmetshinChudoShoes
 {
@@ -14,37 +12,37 @@ namespace AkhmetshinChudoShoes
     {
         private AkhmetshinDBShoesEntities _context = AkhmetshinDBShoesEntities.GetContext();
 
+        // ДОБАВЛЕНО: Храним последние правильные даты
+        private DateTime _lastValidStart;
+        private DateTime _lastValidEnd;
+        private bool _isReverting = false; // Защита от зацикливания
+
         public AnalyticsPage()
         {
             InitializeComponent();
 
+            // По умолчанию: с 1-го числа текущего месяца по сегодняшний день
             DateTime now = DateTime.Now;
-            DatePickerStart.SelectedDate = new DateTime(now.Year, now.Month, 1);
+            DateTime startOfMonth = new DateTime(now.Year, now.Month, 1);
+
+            DatePickerStart.SelectedDate = startOfMonth;
             DatePickerEnd.SelectedDate = now;
 
+            // Сохраняем в память
+            _lastValidStart = startOfMonth;
+            _lastValidEnd = now;
+
             UpdateAnalytics();
         }
 
-        // Пересчет данных в реальном времени
         private void DatePicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
         {
-            UpdateAnalytics();
-        }
+            // Если мы сами меняем дату (откатываем), ничего не делаем
+            if (_isReverting) return;
 
-        private void UpdateAnalytics()
-        {
-            // Защита от вылета при инициализации
-            if (DatePickerStart == null || DatePickerEnd == null || TBlockTotalOrders == null)
-                return;
-
-            // ЗАЩИТА: Если даты пустые (пользователь стер), прерываем расчет
+            // Если одно из полей пустое, не рассчитываем
             if (!DatePickerStart.SelectedDate.HasValue || !DatePickerEnd.SelectedDate.HasValue)
-            {
-                TBlockTotalOrders.Text = "-";
-                TBlockTotalSum.Text = "-";
-                TopProductsGrid.ItemsSource = null;
                 return;
-            }
 
             DateTime start = DatePickerStart.SelectedDate.Value;
             DateTime end = DatePickerEnd.SelectedDate.Value;
@@ -52,20 +50,44 @@ namespace AkhmetshinChudoShoes
             // ВАЛИДАЦИЯ
             if (start > end)
             {
-                TBlockTotalOrders.Text = "-";
-                TBlockTotalSum.Text = "-";
-                TopProductsGrid.ItemsSource = null;
-                return;
+                MessageBox.Show("Дата начала не может быть позже даты окончания!", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                // ВКЛЮЧАЕМ ЗАЩИТУ И ОТКАТЫВАЕМ ДАТЫ НА ПОСЛЕДНИЕ ПРАВИЛЬНЫЕ
+                _isReverting = true;
+                DatePickerStart.SelectedDate = _lastValidStart;
+                DatePickerEnd.SelectedDate = _lastValidEnd;
+                _isReverting = false; // ВЫКЛЮЧАЕМ ЗАЩИТУ
+
+                return; // Прерываем, данные не обновляем (остаются старые)
             }
 
+            // Если даты корректны — запоминаем их
+            _lastValidStart = start;
+            _lastValidEnd = end;
+
+            // Обновляем данные
+            UpdateAnalytics();
+        }
+
+        private void UpdateAnalytics()
+        {
+            if (!DatePickerStart.SelectedDate.HasValue || !DatePickerEnd.SelectedDate.HasValue)
+                return;
+
+            DateTime start = DatePickerStart.SelectedDate.Value;
+            DateTime end = DatePickerEnd.SelectedDate.Value;
+
+            // Так как откат уже произошел выше, тут даты всегда правильные
             DateTime endDateInclusive = end.AddDays(1);
 
+            // 1. Общее количество заказов
             var ordersInPeriod = _context.Orders
                 .Where(o => o.OrderDate >= start && o.OrderDate < endDateInclusive)
                 .ToList();
 
             TBlockTotalOrders.Text = ordersInPeriod.Count.ToString();
 
+            // 2. Общая сумма продаж
             var orderProductsInPeriod = _context.OrderProducts
                 .Where(op => op.Orders.OrderDate >= start && op.Orders.OrderDate < endDateInclusive)
                 .ToList();
@@ -75,6 +97,7 @@ namespace AkhmetshinChudoShoes
 
             TBlockTotalSum.Text = totalSum.ToString("F2");
 
+            // 3. Топ-5 моделей
             var topProducts = orderProductsInPeriod
                 .GroupBy(op => op.StockItems.Products)
                 .Select(g => new
@@ -90,7 +113,7 @@ namespace AkhmetshinChudoShoes
             TopProductsGrid.ItemsSource = topProducts;
         }
 
-        // ЭКСПОРТ В PDF
+        // ЭКСПОРТ В PDF (остается без изменений)
         private void BtnExportPdf_Click(object sender, RoutedEventArgs e)
         {
             DateTime start = DatePickerStart.SelectedDate ?? DateTime.MinValue;
@@ -104,33 +127,27 @@ namespace AkhmetshinChudoShoes
 
             try
             {
-                // Создаем документ
                 PdfDocument document = new PdfDocument();
                 document.Info.Title = "Отчет по продажам";
                 PdfPage page = document.AddPage();
                 XGraphics gfx = XGraphics.FromPdfPage(page);
 
-                // Шрифты
                 XFont fontTitle = new XFont("Arial", 18, XFontStyleEx.Bold);
                 XFont fontText = new XFont("Arial", 12, XFontStyleEx.Regular);
                 XFont fontHeader = new XFont("Arial", 12, XFontStyleEx.Bold);
 
                 int y = 40;
-                // Заголовок
                 gfx.DrawString("Отчет по продажам", fontTitle, XBrushes.Black, new XRect(0, y, page.Width, page.Height), XStringFormats.TopCenter);
                 y += 40;
 
-                // Период
                 gfx.DrawString($"Период: с {start:dd.MM.yyyy} по {end:dd.MM.yyyy}", fontText, XBrushes.Black, 40, y);
                 y += 25;
 
-                // Сводные данные
                 gfx.DrawString($"Общее количество заказов: {TBlockTotalOrders.Text}", fontText, XBrushes.Black, 40, y);
                 y += 20;
                 gfx.DrawString($"Общая сумма продаж: {TBlockTotalSum.Text} руб.", fontText, XBrushes.Black, 40, y);
                 y += 40;
 
-                // Таблица Топ-5
                 gfx.DrawString("Топ-5 моделей по количеству проданных пар:", fontHeader, XBrushes.Black, 40, y);
                 y += 25;
 
@@ -139,7 +156,6 @@ namespace AkhmetshinChudoShoes
                 gfx.DrawString("Кол-во пар", fontHeader, XBrushes.Black, 450, y);
                 y += 20;
 
-                // Вывод строк
                 foreach (var item in TopProductsGrid.Items)
                 {
                     dynamic row = item;
@@ -149,7 +165,6 @@ namespace AkhmetshinChudoShoes
                     y += 20;
                 }
 
-                // Сохранение файла
                 Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog();
                 saveFileDialog.Filter = "PDF Files|*.pdf";
                 saveFileDialog.FileName = $"Отчет_{start:dd.MM.yyyy}_{end:dd.MM.yyyy}.pdf";

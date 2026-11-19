@@ -30,13 +30,12 @@ namespace AkhmetshinChudoShoes
             _isLoading = false;
         }
 
-        // ДОБАВЛЕНО: Откат несохраненных изменений при закрытии окна
         protected override void OnClosed(EventArgs e)
         {
             base.OnClosed(e);
             try
             {
-                if (_currentOrder != null && _context.Entry(_currentOrder).State == System.Data.Entity.EntityState.Modified)
+                if (_currentOrder != null)
                 {
                     _context.Entry(_currentOrder).Reload();
                 }
@@ -116,6 +115,13 @@ namespace AkhmetshinChudoShoes
             if (selectedItem == null)
             {
                 MessageBox.Show("Выберите товар для удаления!", "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            int itemsCount = _context.OrderProducts.Count(op => op.OrderID == _currentOrder.OrderID);
+            if (itemsCount <= 1)
+            {
+                MessageBox.Show("Нельзя удалить последнюю позицию! Заказ не может быть пустым.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
 

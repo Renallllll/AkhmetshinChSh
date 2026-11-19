@@ -17,7 +17,7 @@
             <Image Source="/ProductPhoto/ЧудоОбувь.png" Grid.Row="0" HorizontalAlignment="Left"/>
             <TextBlock Text="Чудо обувь" Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="30"/>
 
-            <Button Content="Назад" Name="btnBack" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0" Click="btnBack_Click" Width="100" Height="30" Cursor="Hand"/>
+            <Button Content="Назад" Name="btnBack" Grid.Row="0" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0" Click="btnBack_Click" Width="100" Height="30" Cursor="Hand"/>
             <Frame Grid.Row="1" Name="MainFrame" ContentRendered="MainFrame_ContentRendered" NavigationUIVisibility="Hidden"/>
             <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center">
                 <Button Content="Каталог" Name="BtnCatalog" Width="100" Height="30" Margin="0,0,10,0" Click="BtnCatalog_Click" Cursor="Hand"/>

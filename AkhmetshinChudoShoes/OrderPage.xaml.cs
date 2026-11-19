@@ -29,7 +29,6 @@ namespace AkhmetshinChudoShoes
 
             DateTime lastMonth = DateTime.Now.AddMonths(-1);
 
-            // Находим ID товаров, на которые БЫЛИ заказы в прошлом месяце
             var productsWithOrders = _context.OrderProducts
                 .Where(op => op.Orders.OrderDate.Month == lastMonth.Month &&
                              op.Orders.OrderDate.Year == lastMonth.Year)
@@ -37,12 +36,12 @@ namespace AkhmetshinChudoShoes
                 .Distinct()
                 .ToList();
 
-            // Проставляем флаг каждому товару
             foreach (var product in current)
             {
                 product.HasOrdersLastMonth = productsWithOrders.Contains(product.ProductID);
             }
 
+            //Поиск
             if (!string.IsNullOrWhiteSpace(TBoxSearch.Text))
             {
                 string text = TBoxSearch.Text.ToLower().Trim();
@@ -52,12 +51,14 @@ namespace AkhmetshinChudoShoes
                 ).ToList();
             }
 
+            //Фильтрация
             if (ComboFilter.SelectedIndex > 0)
             {
                 int catId = ComboFilter.SelectedIndex;
                 current = current.Where(p => p.ProductCategoryID == catId).ToList();
             }
 
+            //Сортировка
             if (ComboSort.SelectedIndex == 1)
                 current = current.OrderBy(p => p.FinalPrice).ToList();
             else if (ComboSort.SelectedIndex == 2)

@@ -10,9 +10,11 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="Корзина" FontSize="24" FontWeight="Bold" Margin="5,0,0,10"/>
-
-        <TextBlock Name="TBlockOrderTarget" Text="" FontSize="16" Foreground="Red" FontWeight="Bold" Margin="5,0,0,10" Visibility="Collapsed"/>
+        <StackPanel Grid.Row="0" Margin="5,0,0,10">
+            <TextBlock Text="Корзина" FontSize="24" FontWeight="Bold" Margin="0,0,0,5"/>
+            <!-- Плашка для менеджера/админа -->
+            <TextBlock Name="TBlockOrderTarget" Text="" FontSize="16" Foreground="Red" FontWeight="Bold" Visibility="Collapsed"/>
+        </StackPanel>
 
         <DataGrid Name="CartGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
                   CanUserAddRows="False" HeadersVisibility="Column" GridLinesVisibility="Horizontal">
