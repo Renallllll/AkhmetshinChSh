@@ -38,7 +38,7 @@
                             </StackPanel>
                             <StackPanel Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right">
                                 <Button Content="Состав заказа" Height="30" Margin="0,5" Click="ViewCompositionBtn_Click" Cursor="Hand"/>
-                                <Button Content="Удалить заказ" Height="30" Margin="0,5" Click="DeleteOrderBtn_Click" Background="Red" Cursor="Hand"/>
+                                <Button Name="DeleteOrderBtn" Content="Удалить заказ" Height="30" Margin="0,5" Click="DeleteOrderBtn_Click" Loaded="DeleteOrderBtn_Loaded" Background="Red" Cursor="Hand"/>
                             </StackPanel>
                         </Grid>
                     </Border>

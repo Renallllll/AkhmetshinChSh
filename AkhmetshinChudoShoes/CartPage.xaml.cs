@@ -8,13 +8,51 @@ namespace AkhmetshinChudoShoes
     public partial class CartPage : Page
     {
         private AkhmetshinDBShoesEntities _context = AkhmetshinDBShoesEntities.GetContext();
+        private Button _btnCancelOrderTarget;
 
         public CartPage()
         {
             InitializeComponent();
+            InitCancelOrderTargetButton();
             UpdateCart();
         }
-        
+
+        private void InitCancelOrderTargetButton()
+        {
+            if (_btnCancelOrderTarget != null) return;
+
+            _btnCancelOrderTarget = new Button
+            {
+                Content = "Отменить заказ для клиента",
+                Width = 260,
+                Height = 28,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                Margin = new Thickness(0, 5, 0, 0),
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Visibility = Visibility.Collapsed
+            };
+            _btnCancelOrderTarget.Click += BtnCancelOrderTarget_Click;
+
+            if (TBlockOrderTarget.Parent is Panel parentPanel)
+            {
+                parentPanel.Children.Add(_btnCancelOrderTarget);
+            }
+        }
+
+        private void BtnCancelOrderTarget_Click(object sender, RoutedEventArgs e)
+        {
+            if (Manager.OrderClient == null) return;
+
+            if (MessageBox.Show("Отменить оформление заказа для выбранного клиента и очистить корзину?",
+                "Отмена заказа", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                Manager.OrderClient = null;
+                Manager.Cart.Clear();
+                UpdateCart();
+                MessageBox.Show("Оформление заказа для клиента отменено.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
         private void UpdateCart()
         {
             CartGrid.ItemsSource = null;
@@ -31,10 +69,14 @@ namespace AkhmetshinChudoShoes
             {
                 TBlockOrderTarget.Text = $"Внимание! Заказ оформляется для клиента: {Manager.OrderClient.UserLastName} {Manager.OrderClient.UserFirstName} {Manager.OrderClient.UserPytronimic}";
                 TBlockOrderTarget.Visibility = Visibility.Visible;
+                if (_btnCancelOrderTarget != null)
+                    _btnCancelOrderTarget.Visibility = Visibility.Visible;
             }
             else
             {
                 TBlockOrderTarget.Visibility = Visibility.Collapsed;
+                if (_btnCancelOrderTarget != null)
+                    _btnCancelOrderTarget.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -117,7 +159,6 @@ namespace AkhmetshinChudoShoes
             var cartItem = button.DataContext as CartItem;
             if (cartItem == null) return;
 
-            // Проверяем остаток на складе
             if (cartItem.Quantity < cartItem.StockItem.QuantityForOrders)
             {
                 cartItem.Quantity++;
@@ -142,7 +183,6 @@ namespace AkhmetshinChudoShoes
             }
             else
             {
-                // Если количество становится 0, предлагаем удалить
                 if (MessageBox.Show("Удалить этот товар из корзины?", "Подтверждение", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     Manager.Cart.Remove(cartItem);

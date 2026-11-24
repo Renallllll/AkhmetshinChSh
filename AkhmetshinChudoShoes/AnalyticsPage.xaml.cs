@@ -24,13 +24,14 @@ namespace AkhmetshinChudoShoes
             // По умолчанию: с 1-го числа текущего месяца по сегодняшний день
             DateTime now = DateTime.Now;
             DateTime startOfMonth = new DateTime(now.Year, now.Month, 1);
+            DateTime initialEnd = now.Date > DateTime.Today ? DateTime.Today : now;
 
             DatePickerStart.SelectedDate = startOfMonth;
-            DatePickerEnd.SelectedDate = now;
+            DatePickerEnd.SelectedDate = initialEnd;
 
             // Сохраняем в память
             _lastValidStart = startOfMonth;
-            _lastValidEnd = now;
+            _lastValidEnd = initialEnd;
 
             UpdateAnalytics();
         }
@@ -46,6 +47,19 @@ namespace AkhmetshinChudoShoes
 
             DateTime start = DatePickerStart.SelectedDate.Value;
             DateTime end = DatePickerEnd.SelectedDate.Value;
+
+            // ВАЛИДАЦИЯ: запрет будущих дат
+            if (start.Date > DateTime.Today || end.Date > DateTime.Today)
+            {
+                MessageBox.Show("Дата периода не может быть в будущем!", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                _isReverting = true;
+                DatePickerStart.SelectedDate = _lastValidStart;
+                DatePickerEnd.SelectedDate = _lastValidEnd;
+                _isReverting = false;
+
+                return;
+            }
 
             // ВАЛИДАЦИЯ
             if (start > end)
@@ -118,6 +132,12 @@ namespace AkhmetshinChudoShoes
         {
             DateTime start = DatePickerStart.SelectedDate ?? DateTime.MinValue;
             DateTime end = DatePickerEnd.SelectedDate ?? DateTime.MaxValue;
+
+            if (start.Date > DateTime.Today || end.Date > DateTime.Today)
+            {
+                MessageBox.Show("Дата периода не может быть в будущем!", "Ошибка валидации", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             if (start > end)
             {

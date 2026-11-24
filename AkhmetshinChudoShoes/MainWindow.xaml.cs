@@ -31,7 +31,7 @@ namespace AkhmetshinChudoShoes
                 string roleName = user.Roles != null ? user.Roles.RoleName : "Пользователь";
                 TBlockUserInfo.Text = $"{user.UserLastName} {user.UserFirstName} {user.UserPytronimic} ({roleName})";
 
-                if (user.RoleID == 1 || user.RoleID == 2)
+                if (user.RoleID == 1 || user.RoleID == 2 || user.RoleID == 3)
                     BtnOrders.Visibility = Visibility.Visible;
                 else
                     BtnOrders.Visibility = Visibility.Collapsed;

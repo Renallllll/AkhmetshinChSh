@@ -7,24 +7,106 @@ namespace AkhmetshinChudoShoes
     public partial class OrdersListPage : Page
     {
         private AkhmetshinDBShoesEntities _context = AkhmetshinDBShoesEntities.GetContext();
+        private Button _btnCancelClientOrder;
 
         public OrdersListPage()
         {
             InitializeComponent();
+            InitCancelClientOrderButton();
+            ConfigureClientOrderMode();
             UpdateOrders();
+        }
+
+        private void InitCancelClientOrderButton()
+        {
+            if (_btnCancelClientOrder != null) return;
+
+            _btnCancelClientOrder = new Button
+            {
+                Content = "Отменить заказ клиента",
+                Height = 30,
+                Width = 170,
+                Margin = new Thickness(0, 0, 10, 0),
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Cursor = System.Windows.Input.Cursors.Hand,
+                Visibility = Visibility.Collapsed
+            };
+            _btnCancelClientOrder.Click += BtnCancelClientOrder_Click;
+
+            if (BtnCreateOrder.Parent is Panel parentPanel)
+            {
+                parentPanel.Children.Add(_btnCancelClientOrder);
+            }
+        }
+
+        private void ConfigureClientOrderMode()
+        {
+            if (Manager.CurrentUser != null && Manager.CurrentUser.RoleID == 3)
+            {
+                BtnCreateOrder.Visibility = Visibility.Collapsed;
+                if (_btnCancelClientOrder != null)
+                    _btnCancelClientOrder.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            if (_btnCancelClientOrder != null)
+            {
+                _btnCancelClientOrder.Visibility = Manager.OrderClient != null
+                    ? Visibility.Visible
+                    : Visibility.Collapsed;
+            }
+        }
+
+        private void BtnCancelClientOrder_Click(object sender, RoutedEventArgs e)
+        {
+            if (Manager.OrderClient == null) return;
+
+            if (MessageBox.Show("Отменить создание заказа для выбранного клиента? Выбранные товары в корзине будут очищены.",
+                "Отмена создания заказа", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
+            {
+                Manager.OrderClient = null;
+                Manager.Cart.Clear();
+                ConfigureClientOrderMode();
+                MessageBox.Show("Создание заказа для клиента отменено.", "Информация", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
         }
 
         private void UpdateOrders()
         {
-            var orders = _context.Orders.ToList();
-            OrdersListView.ItemsSource = orders;
+            if (Manager.CurrentUser == null)
+            {
+                OrdersListView.ItemsSource = null;
+                return;
+            }
+
+            if (Manager.CurrentUser.RoleID == 3)
+            {
+                var myOrders = _context.Orders
+                    .Where(o => o.ClientID == Manager.CurrentUser.UserID)
+                    .ToList();
+                OrdersListView.ItemsSource = myOrders;
+            }
+            else
+            {
+                var orders = _context.Orders.ToList();
+                OrdersListView.ItemsSource = orders;
+            }
         }
 
         private void Page_IsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             if (Visibility == Visibility.Visible)
             {
+                ConfigureClientOrderMode();
                 UpdateOrders();
+            }
+        }
+
+        private void DeleteOrderBtn_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button btn && Manager.CurrentUser != null && Manager.CurrentUser.RoleID == 3)
+            {
+                btn.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -75,7 +157,7 @@ namespace AkhmetshinChudoShoes
             {
                 Title = "Создание заказа",
                 Width = 350,
-                Height = 400,
+                Height = 450,
                 WindowStartupLocation = WindowStartupLocation.CenterScreen
             };
 
@@ -97,7 +179,7 @@ namespace AkhmetshinChudoShoes
 
             lbClients.ItemsSource = clients;
 
-            Button btnSelect = new Button { Content = "Перейти к выбору товаров", Height = 35, Margin = new Thickness(0, 15, 0, 0), Background = System.Windows.Media.Brushes.LightGreen };
+            Button btnSelect = new Button { Content = "Перейти к выбору товаров", Height = 35, Width = 300, Margin = new Thickness(0, 15, 0, 0) };
             btnSelect.Click += (s, args) =>
             {
                 if (lbClients.SelectedItem == null)
@@ -111,6 +193,7 @@ namespace AkhmetshinChudoShoes
 
                 Manager.OrderClient = _context.Users.FirstOrDefault(u => u.UserID == clientId);
                 Manager.Cart.Clear();
+                ConfigureClientOrderMode();
 
                 selectWindow.Close();
 
@@ -119,9 +202,13 @@ namespace AkhmetshinChudoShoes
                 Manager.MainFrame.Navigate(new OrderPage());
             };
 
+            Button btnCancel = new Button { Content = "Отмена", Width = 300, Margin = new Thickness(0, 8, 0, 0) };
+            btnCancel.Click += (s, args) => selectWindow.Close();
+
             panel.Children.Add(tbHint);
             panel.Children.Add(lbClients);
             panel.Children.Add(btnSelect);
+            panel.Children.Add(btnCancel);
             selectWindow.Content = panel;
             selectWindow.ShowDialog();
         }
