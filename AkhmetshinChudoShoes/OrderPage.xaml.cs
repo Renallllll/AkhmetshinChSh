@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,16 +9,26 @@ namespace AkhmetshinChudoShoes
     public partial class OrderPage : Page
     {
         private AkhmetshinDBShoesEntities _context = AkhmetshinDBShoesEntities.GetContext();
+        private List<Categorys> _categories = new List<Categorys>();
+        private bool _isOpeningProduct = false;
 
         public OrderPage()
         {
             InitializeComponent();
-            ComboFilter.Items.Add("Все категории");
-            ComboFilter.Items.Add("Детская обувь");
-            ComboFilter.Items.Add("Женская обувь");
-            ComboFilter.Items.Add("Мужская обувь");
-            ComboFilter.SelectedIndex = 0;
+            LoadCategories();
             UpdateOrder();
+        }
+
+        private void LoadCategories()
+        {
+            _categories = _context.Categorys.OrderBy(c => c.Category).ToList();
+            ComboFilter.Items.Clear();
+            ComboFilter.Items.Add("Все категории");
+            foreach (var category in _categories)
+            {
+                ComboFilter.Items.Add(category.Category);
+            }
+            ComboFilter.SelectedIndex = 0;
         }
 
         private void UpdateOrder()
@@ -41,7 +52,7 @@ namespace AkhmetshinChudoShoes
                 product.HasOrdersLastMonth = productsWithOrders.Contains(product.ProductID);
             }
 
-            //Поиск
+            // Поиск по наименованию и описанию в реальном времени
             if (!string.IsNullOrWhiteSpace(TBoxSearch.Text))
             {
                 string text = TBoxSearch.Text.ToLower().Trim();
@@ -51,14 +62,14 @@ namespace AkhmetshinChudoShoes
                 ).ToList();
             }
 
-            //Фильтрация
-            if (ComboFilter.SelectedIndex > 0)
+            // Фильтрация по категории из БД ("Все категории" имеет индекс 0)
+            if (ComboFilter.SelectedIndex > 0 && ComboFilter.SelectedIndex <= _categories.Count)
             {
-                int catId = ComboFilter.SelectedIndex;
+                int catId = _categories[ComboFilter.SelectedIndex - 1].CategoryID;
                 current = current.Where(p => p.ProductCategoryID == catId).ToList();
             }
 
-            //Сортировка
+            // Сортировка по цене с сохранением при поиске и фильтрации
             if (ComboSort.SelectedIndex == 1)
                 current = current.OrderBy(p => p.FinalPrice).ToList();
             else if (ComboSort.SelectedIndex == 2)
@@ -81,27 +92,69 @@ namespace AkhmetshinChudoShoes
             }
         }
 
-        private void OrderBtn_Click(object sender, RoutedEventArgs e)
+        private void OrderListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (Manager.CurrentUser == null)
-            {
-                MessageBox.Show("Для оформления заказа необходимо авторизоваться!", "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            var selectedProduct = (sender as Button).DataContext as Products;
+            if (_isOpeningProduct) return;
+            var selectedProduct = OrderListView.SelectedItem as Products;
             if (selectedProduct == null) return;
 
-            var hasStock = _context.StockItems.Any(si => si.ProductID == selectedProduct.ProductID && si.QuantityForOrders > 0);
+            OpenProductOrderWindow(selectedProduct);
+        }
 
-            if (!hasStock)
+        private void OrderBtn_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedProduct = (sender as Button)?.DataContext as Products;
+            if (selectedProduct == null) return;
+
+            OpenProductOrderWindow(selectedProduct);
+        }
+
+        private void OpenProductOrderWindow(Products selectedProduct)
+        {
+            if (_isOpeningProduct) return;
+
+            try
             {
-                MessageBox.Show("Этого товара сейчас нет в наличии!", "Нет в наличии", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+                _isOpeningProduct = true;
 
-            SelectSizeWindow window = new SelectSizeWindow(selectedProduct);
-            window.ShowDialog();
+                if (Manager.CurrentUser == null)
+                {
+                    MessageBox.Show(
+                        "Для просмотра карточки товара и оформления заказа необходимо войти в систему по логину.",
+                        "Требуется авторизация",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+
+                var hasStock = _context.StockItems.Any(si => si.ProductID == selectedProduct.ProductID && si.QuantityForOrders > 0);
+                if (!hasStock)
+                {
+                    MessageBox.Show(
+                        "Выбранная модель сейчас недоступна для заказа (нет пар в наличии). Выберите другую модель или размер.",
+                        "Нет в наличии",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
+                SelectSizeWindow window = new SelectSizeWindow(selectedProduct);
+                window.ShowDialog();
+                UpdateOrder();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Не удалось открыть форму товара: {ex.Message}\nПроверьте подключение к базе данных и повторите попытку.",
+                    "Ошибка открытия",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+            finally
+            {
+                OrderListView.SelectedItem = null;
+                _isOpeningProduct = false;
+            }
         }
     }
 }

@@ -12,8 +12,8 @@
 
         <StackPanel Grid.Row="0" Margin="5,0,0,10">
             <TextBlock Text="Корзина" FontSize="24" FontWeight="Bold" Margin="0,0,0,5"/>
-            <!-- Плашка для менеджера/админа -->
             <TextBlock Name="TBlockOrderTarget" Text="" FontSize="16" Foreground="Red" FontWeight="Bold" Visibility="Collapsed"/>
+            <Button Name="BtnCancelOrderTarget" Content="Отменить заказ для клиента" MinWidth="230" Height="28" Padding="12,0" HorizontalAlignment="Left" Margin="0,5,0,0" Click="BtnCancelOrderTarget_Click" Cursor="Hand" Visibility="Collapsed"/>
         </StackPanel>
 
         <DataGrid Name="CartGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
@@ -34,17 +34,17 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
 
-                <DataGridTextColumn Header="Цена (руб)" Binding="{Binding StockItem.Products.ProductPrice}" Width="120"/>
+                <DataGridTextColumn Header="Цена (руб)" Binding="{Binding StockItem.Products.FinalPrice}" Width="120"/>
             </DataGrid.Columns>
         </DataGrid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
-            <Button Content="Удалить из корзины" Width="150" Height="35" Margin="0,0,20,0" Click="DeleteFromCartBtn_Click" Background="Red" Cursor="Hand"/>
+            <Button Content="Удалить из корзины" MinWidth="165" Height="35" Padding="10,0" Margin="0,0,20,0" Click="DeleteFromCartBtn_Click" Background="Red" Cursor="Hand"/>
 
             <TextBlock Text="Итого: " FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
             <TextBlock Name="TBlockTotal" Text="0 руб." FontSize="20" FontWeight="Bold" Foreground="Red" VerticalAlignment="Center" Margin="0,0,20,0"/>
 
-            <Button Content="Оформить заказ" Width="150" Height="35" Click="CheckoutBtn_Click" FontWeight="Bold" Cursor="Hand"/>
+            <Button Content="Оформить заказ" MinWidth="150" Height="35" Padding="10,0" Click="CheckoutBtn_Click" FontWeight="Bold" Cursor="Hand"/>
         </StackPanel>
     </Grid>
 </Page>

@@ -1,31 +1,61 @@
 ﻿<Window x:Class="AkhmetshinChudoShoes.SelectSizeWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Выбор размера" Height="450" Width="450" WindowStartupLocation="CenterScreen" FontFamily="Calibri">
-    <Grid Margin="10">
+        Title="Карточка товара" Height="620" Width="620" MinHeight="540" MinWidth="520" WindowStartupLocation="CenterScreen" FontFamily="Calibri" Icon="/ProductPhoto/ЧудоОбувь.ico">
+    <Grid Margin="15">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <TextBlock Name="TBlockProductName" Text="Выберите размер" FontSize="18" FontWeight="Bold" Margin="0,0,0,10" TextWrapping="Wrap"/>
+        <!-- Заголовок: Производство | Наименование -->
+        <TextBlock Name="TBlockProductName" Grid.Row="0" Text="Карточка товара" FontSize="20" FontWeight="Bold" Margin="0,0,0,10" TextWrapping="Wrap"/>
 
-        <DataGrid Name="SizesGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
-                  SelectionMode="Single" HeadersVisibility="Column" CanUserAddRows="False">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="Размер" Binding="{Binding Sizes.Size}" Width="100"/>
-                <DataGridTextColumn Header="В наличии (пар)" Binding="{Binding QuantityForOrders}" Width="*"/>
-            </DataGrid.Columns>
-        </DataGrid>
+        <!-- Основные данные товара из БД -->
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,15,0,0" HorizontalAlignment="Center">
+            <Image Name="ImgProduct" Grid.Column="0" Width="130" Height="130" Stretch="Uniform" VerticalAlignment="Top" Margin="0,0,15,0"/>
+
+            <StackPanel Grid.Column="1">
+                <TextBlock Name="TBlockManufacturer" FontSize="15" Margin="0,0,0,3"/>
+                <TextBlock Name="TBlockCategory" FontSize="15" Margin="0,0,0,3"/>
+                <TextBlock Name="TBlockPrice" FontSize="16" FontWeight="Bold" Foreground="Red" Margin="0,0,0,4"/>
+                <TextBlock Name="TBlockStructure" FontSize="14" TextWrapping="Wrap" Margin="0,0,0,3"/>
+                <TextBlock Name="TBlockDescription" FontSize="14" Foreground="DimGray" TextWrapping="Wrap" Margin="0,0,0,4"/>
+                <TextBlock Name="TBlockSizeRange" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Доступные для заказа размеры -->
+        <GroupBox Header="Доступные для заказа размеры" Grid.Row="2" Padding="5">
+            <DataGrid Name="SizesGrid" AutoGenerateColumns="False" IsReadOnly="True" 
+                      SelectionMode="Single" HeadersVisibility="Column" CanUserAddRows="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Размер" Binding="{Binding Sizes.Size}" Width="100"/>
+                    <DataGridTextColumn Header="В наличии (пар)" Binding="{Binding QuantityForOrders}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </GroupBox>
+
+        <!-- Выбор количества -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Center">
             <TextBlock Text="Количество:" FontSize="16" VerticalAlignment="Center" Margin="0,0,10,0"/>
-            <TextBox Name="TBoxQuantity" Text="1" Width="60" Height="25" FontSize="16" TextAlignment="Center"/>
+            <TextBox Name="TBoxQuantity" Text="1" Width="60" Height="26" FontSize="16" TextAlignment="Center" VerticalContentAlignment="Center"/>
         </StackPanel>
 
-        <Button Name="BtnAdd" Content="Добавить в корзину" Grid.Row="3" Width="200" Height="40" Margin="0,15,0,0" 
-                HorizontalAlignment="Center" Click="BtnAdd_Click" FontWeight="Bold" Cursor="Hand"/>
+        <!-- Действия: Добавить в корзину / Отказаться -->
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,14,0,0" HorizontalAlignment="Center">
+            <Button Name="BtnAdd" Content="Добавить в корзину" MinWidth="190" Height="38" Padding="12,0" Margin="0,0,12,0"
+                    Click="BtnAdd_Click" FontWeight="Bold" Cursor="Hand"/>
+            <Button Name="BtnCancel" Content="Отказаться" MinWidth="130" Height="38" Padding="12,0"
+                    Click="BtnCancel_Click" Cursor="Hand"/>
+        </StackPanel>
     </Grid>
 </Window>

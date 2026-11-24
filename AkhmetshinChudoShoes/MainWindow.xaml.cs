@@ -29,7 +29,8 @@ namespace AkhmetshinChudoShoes
             else
             {
                 string roleName = user.Roles != null ? user.Roles.RoleName : "Пользователь";
-                TBlockUserInfo.Text = $"{user.UserLastName} {user.UserFirstName} {user.UserPytronimic} ({roleName})";
+                string fullName = $"{user.UserLastName} {user.UserFirstName} {user.UserPytronimic}".Trim();
+                TBlockUserInfo.Text = $"{fullName} ({roleName})";
 
                 if (user.RoleID == 1 || user.RoleID == 2 || user.RoleID == 3)
                     BtnOrders.Visibility = Visibility.Visible;
@@ -48,18 +49,11 @@ namespace AkhmetshinChudoShoes
             MainFrame.Navigate(new AnalyticsPage());
         }
 
-        private void btnBack_Click(object sender, RoutedEventArgs e)
-        {
-            btnBack.Visibility = Visibility.Hidden;
-            if (Manager.MainFrame.CanGoBack) {
-                btnBack.Visibility = Visibility.Visible;
-                Manager.MainFrame.GoBack();
-            }
-        }
-
         private void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
             Manager.CurrentUser = null;
+            Manager.OrderClient = null;
+            Manager.Cart.Clear();
             LoginWindow login = new LoginWindow();
             login.Show();
             this.Close();
@@ -73,10 +67,6 @@ namespace AkhmetshinChudoShoes
         private void BtnOrders_Click(object sender, RoutedEventArgs e)
         {
             MainFrame.Navigate(new OrdersListPage());
-        }
-
-        private void MainFrame_ContentRendered(object sender, EventArgs e)
-        {
         }
 
         private void BtnCart_Click(object sender, RoutedEventArgs e)

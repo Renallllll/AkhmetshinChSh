@@ -19,18 +19,26 @@ namespace AkhmetshinChudoShoes
         {
             this.StockItems = new HashSet<StockItems>();
         }
-    
+
         public int ProductID { get; set; }
         public int ProductCategoryID { get; set; }
-        public string CategoryName {
+        public string CategoryName
+        {
             get
             {
-                return Categorys.Category;
+                return Categorys != null ? Categorys.Category : string.Empty;
             }
         }
         public int ProductSubcategoryID { get; set; }
         public string ProductName { get; set; }
         public int ProductManufacturer { get; set; }
+        public string ManufacturerName
+        {
+            get
+            {
+                return Manufacturers != null ? Manufacturers.Manufacturer : string.Empty;
+            }
+        }
         public string ProductDescription { get; set; }
         public string ProductStructure { get; set; }
         public decimal ProductPrice { get; set; }
@@ -39,10 +47,10 @@ namespace AkhmetshinChudoShoes
         {
             get
             {
-                if (ProductImage == null)
-                    return "images/picture.png";
+                if (string.IsNullOrWhiteSpace(ProductImage))
+                    return "ProductPhoto/picture.png";
                 else
-                    return "ProductPhoto/" + ProductImage;
+                    return "ProductPhoto/" + ProductImage.Trim();
             }
         }
         public int TotalStock { get { return StockItems != null ? StockItems.Sum(s => s.QuantityForOrders) : 0; } }
