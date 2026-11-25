@@ -33,9 +33,8 @@
             <Button Name="BtnDeleteItem" Content="Удалить позицию" MinWidth="170" Height="30" Padding="10,0" Margin="0,0,12,0" 
                     Click="BtnDeleteItem_Click" FontWeight="Bold" Cursor="Hand"/>
 
-            <Button Name="BtnSaveDate" Content="Сохранить дату" MinWidth="150" Height="30" Padding="10,0" Margin="0,0,12,0" 
-                    Click="BtnSaveDate_Click" FontWeight="Bold" 
-                    IsEnabled="False" Cursor="Hand"/>
+            <Button Name="BtnSaveChanges" Content="Сохранить" MinWidth="140" Height="30" Padding="10,0" Margin="0,0,12,0" 
+        Click="BtnSaveChanges_Click" FontWeight="Bold" Cursor="Hand" Visibility="Collapsed"/>
 
             <TextBlock Text="Итого по заказу: " FontSize="18" FontWeight="Bold" VerticalAlignment="Center" Margin="10,0,0,0"/>
             <TextBlock Name="TBlockTotalSum" Text="0 руб." FontSize="18" FontWeight="Bold" Foreground="Red" VerticalAlignment="Center"/>

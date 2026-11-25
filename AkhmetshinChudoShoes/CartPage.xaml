@@ -10,10 +10,13 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="5,0,0,10">
-            <TextBlock Text="Корзина" FontSize="24" FontWeight="Bold" Margin="0,0,0,5"/>
-            <TextBlock Name="TBlockOrderTarget" Text="" FontSize="16" Foreground="Red" FontWeight="Bold" Visibility="Collapsed"/>
-            <Button Name="BtnCancelOrderTarget" Content="Отменить заказ для клиента" MinWidth="230" Height="28" Padding="12,0" HorizontalAlignment="Left" Margin="0,5,0,0" Click="BtnCancelOrderTarget_Click" Cursor="Hand" Visibility="Collapsed"/>
+        
+
+        <StackPanel x:Name="CustomerSelectPanel" Orientation="Horizontal" Margin="0,0,0,10" Visibility="Collapsed">
+            <TextBlock Text="Корзина" FontSize="24" FontWeight="Bold" Margin="15"/>
+            <TextBlock Text="Заказчик: " FontSize="16" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <ComboBox x:Name="CbCustomer" Width="260" Height="28" VerticalAlignment="Center"
+              DisplayMemberPath="FullNameDisplay" SelectedValuePath="UserID"/>
         </StackPanel>
 
         <DataGrid Name="CartGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
@@ -37,7 +40,7 @@
                 <DataGridTextColumn Header="Цена (руб)" Binding="{Binding StockItem.Products.FinalPrice}" Width="120"/>
             </DataGrid.Columns>
         </DataGrid>
-
+        
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
             <Button Content="Удалить из корзины" MinWidth="165" Height="35" Padding="10,0" Margin="0,0,20,0" Click="DeleteFromCartBtn_Click" Background="Red" Cursor="Hand"/>
 

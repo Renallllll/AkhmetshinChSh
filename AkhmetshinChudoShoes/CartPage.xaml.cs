@@ -15,29 +15,10 @@ namespace AkhmetshinChudoShoes
             UpdateCart();
         }
 
-        private void BtnCancelOrderTarget_Click(object sender, RoutedEventArgs e)
-        {
-            if (Manager.OrderClient == null) return;
-
-            if (MessageBox.Show(
-                "Отменить оформление заказа для выбранного клиента и очистить корзину? Выбранные позиции не будут сохранены.",
-                "Отмена заказа",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question) == MessageBoxResult.Yes)
-            {
-                Manager.OrderClient = null;
-                Manager.Cart.Clear();
-                UpdateCart();
-                MessageBox.Show(
-                    "Оформление заказа для клиента отменено, корзина очищена.",
-                    "Информация",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Information);
-            }
-        }
-
         private void UpdateCart()
         {
+            LoadCustomers();
+
             CartGrid.ItemsSource = null;
             CartGrid.ItemsSource = Manager.Cart;
 
@@ -47,17 +28,37 @@ namespace AkhmetshinChudoShoes
                 total += item.Quantity * item.StockItem.Products.FinalPrice;
             }
             TBlockTotal.Text = $"{total} руб.";
+        }
 
-            if (Manager.OrderClient != null)
+        private void LoadCustomers()
+        {
+            int roleId = Manager.CurrentUser != null ? Manager.CurrentUser.RoleID : 0;
+            bool isStaff = roleId == 1 || roleId == 2;
+
+            CustomerSelectPanel.Visibility = isStaff ? Visibility.Visible : Visibility.Collapsed;
+            if (!isStaff) return;
+
+            var prevSelectedId = CbCustomer.SelectedValue is int id ? id : (int?)null;
+
+            var customers = _context.Users
+                .OrderBy(u => u.UserID)
+                .ToList()
+                .Select(u => new
+                {
+                    u.UserID,
+                    FullNameDisplay = $"{u.UserLastName} {u.UserFirstName} {u.UserPytronimic}"
+                })
+                .ToList();
+
+            CbCustomer.ItemsSource = customers;
+
+            if (prevSelectedId.HasValue && customers.Any(c => c.UserID == prevSelectedId.Value))
             {
-                TBlockOrderTarget.Text = $"Внимание! Заказ оформляется для клиента: {Manager.OrderClient.UserLastName} {Manager.OrderClient.UserFirstName} {Manager.OrderClient.UserPytronimic}";
-                TBlockOrderTarget.Visibility = Visibility.Visible;
-                BtnCancelOrderTarget.Visibility = Visibility.Visible;
+                CbCustomer.SelectedValue = prevSelectedId.Value;
             }
-            else
+            else if (customers.Count > 0)
             {
-                TBlockOrderTarget.Visibility = Visibility.Collapsed;
-                BtnCancelOrderTarget.Visibility = Visibility.Collapsed;
+                CbCustomer.SelectedIndex = 0;
             }
         }
 
@@ -105,6 +106,27 @@ namespace AkhmetshinChudoShoes
                 return;
             }
 
+            int roleId = Manager.CurrentUser.RoleID;
+            int targetClientId;
+
+            if (roleId == 1 || roleId == 2)
+            {
+                if (CbCustomer.SelectedValue == null)
+                {
+                    MessageBox.Show(
+                        "Выберите пользователя, для которого оформляется заказ.",
+                        "Не выбран заказчик",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Warning);
+                    return;
+                }
+                targetClientId = (int)CbCustomer.SelectedValue;
+            }
+            else
+            {
+                targetClientId = Manager.CurrentUser.UserID;
+            }
+
             try
             {
                 foreach (var item in Manager.Cart)
@@ -121,9 +143,6 @@ namespace AkhmetshinChudoShoes
                         return;
                     }
                 }
-
-                int targetClientId = Manager.CurrentUser.UserID;
-                if (Manager.OrderClient != null) targetClientId = Manager.OrderClient.UserID;
 
                 var newOrder = new Orders
                 {
@@ -156,7 +175,6 @@ namespace AkhmetshinChudoShoes
                     MessageBoxImage.Information);
 
                 Manager.Cart.Clear();
-                Manager.OrderClient = null;
                 UpdateCart();
             }
             catch (Exception ex)

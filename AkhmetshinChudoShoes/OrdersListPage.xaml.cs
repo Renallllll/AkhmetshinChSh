@@ -153,6 +153,7 @@ namespace AkhmetshinChudoShoes
 
         private void BtnCreateOrder_Click(object sender, RoutedEventArgs e)
         {
+
             Window selectWindow = new Window
             {
                 Title = "Создание заказа",

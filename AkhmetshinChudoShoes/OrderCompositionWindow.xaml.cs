@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -10,7 +13,11 @@ namespace AkhmetshinChudoShoes
         private AkhmetshinDBShoesEntities _context = AkhmetshinDBShoesEntities.GetContext();
 
         private Orders _currentOrder;
+        private List<OrderProducts> _workingItems = new List<OrderProducts>();
+        private List<int> _removedPositionIds = new List<int>();
+        private Dictionary<int, int> _stockAdjustments = new Dictionary<int, int>();
         private bool _isLoading = true;
+        private bool _isSaved = false;
 
         public OrderCompositionWindow(Orders selectedOrder)
         {
@@ -19,19 +26,25 @@ namespace AkhmetshinChudoShoes
 
             DatePickerOrder.SelectedDate = selectedOrder.OrderDate;
 
-            int roleId = Manager.CurrentUser != null ? Manager.CurrentUser.RoleID : 0;
+            // Кнопка добавления позиции скрыта для всех ролей, включая администратора и менеджера
+            BtnAddItem.Visibility = Visibility.Collapsed;
 
-            if (roleId == 1 || roleId == 2)
-            {
-                BtnAddItem.Visibility = Visibility.Visible;
-            }
+            int roleId = Manager.CurrentUser != null ? Manager.CurrentUser.RoleID : 0;
 
             if (roleId != 1)
             {
                 DatePickerOrder.Visibility = Visibility.Hidden;
                 BtnDeleteItem.Visibility = Visibility.Hidden;
-                BtnSaveDate.Visibility = Visibility.Hidden;
+                BtnSaveChanges.Visibility = Visibility.Hidden;
             }
+            else
+            {
+                BtnSaveChanges.Visibility = Visibility.Visible;
+            }
+
+            _workingItems = _context.OrderProducts
+                .Where(op => op.OrderID == _currentOrder.OrderID)
+                .ToList();
 
             UpdateGrid();
             _isLoading = false;
@@ -46,20 +59,45 @@ namespace AkhmetshinChudoShoes
                 {
                     _context.Entry(_currentOrder).Reload();
                 }
+
+                if (!_isSaved)
+                {
+                    foreach (var entry in _context.ChangeTracker.Entries().ToList())
+                    {
+                        if (entry.Entity is OrderProducts || entry.Entity is StockItems || entry.Entity is Orders)
+                        {
+                            entry.Reload();
+                        }
+                    }
+                }
             }
             catch { }
         }
 
+        private int GetEffectiveStock(StockItems stockItem)
+        {
+            int delta = _stockAdjustments.ContainsKey(stockItem.PositionID) ? _stockAdjustments[stockItem.PositionID] : 0;
+            return stockItem.QuantityForOrders + delta;
+        }
+
+        private void AddStockDelta(int positionId, int delta)
+        {
+            if (!_stockAdjustments.ContainsKey(positionId))
+                _stockAdjustments[positionId] = 0;
+
+            _stockAdjustments[positionId] += delta;
+        }
+
         private void UpdateGrid()
         {
-            TBlockTitle.Text = $"Состав заказа №{_currentOrder.OrderID} от {_currentOrder.OrderDate:dd.MM.yyyy}";
+            DateTime displayDate = (Manager.CurrentUser != null && Manager.CurrentUser.RoleID == 1 && DatePickerOrder.SelectedDate.HasValue)
+                ? DatePickerOrder.SelectedDate.Value
+                : _currentOrder.OrderDate;
 
-            var composition = _context.OrderProducts
-                .Where(op => op.OrderID == _currentOrder.OrderID)
-                .ToList();
+            TBlockTitle.Text = $"Состав заказа №{_currentOrder.OrderID} от {displayDate:dd.MM.yyyy}";
 
             decimal totalSum = 0;
-            foreach (var item in composition)
+            foreach (var item in _workingItems)
             {
                 if (item.StockItems != null && item.StockItems.Products != null)
                 {
@@ -67,7 +105,8 @@ namespace AkhmetshinChudoShoes
                 }
             }
 
-            CompositionGrid.ItemsSource = composition;
+            CompositionGrid.ItemsSource = null;
+            CompositionGrid.ItemsSource = _workingItems;
             TBlockTotalSum.Text = $"{totalSum} руб.";
         }
 
@@ -86,35 +125,10 @@ namespace AkhmetshinChudoShoes
                 _isLoading = true;
                 DatePickerOrder.SelectedDate = _currentOrder.OrderDate;
                 _isLoading = false;
-                BtnSaveDate.IsEnabled = false;
                 return;
             }
 
-            BtnSaveDate.IsEnabled = DatePickerOrder.SelectedDate.Value.Date != _currentOrder.OrderDate.Date;
-        }
-
-        private void BtnSaveDate_Click(object sender, RoutedEventArgs e)
-        {
-            if (!DatePickerOrder.SelectedDate.HasValue) return;
-
-            try
-            {
-                _currentOrder.OrderDate = DatePickerOrder.SelectedDate.Value;
-                _context.SaveChanges();
-
-                UpdateGrid();
-                BtnSaveDate.IsEnabled = false;
-
-                MessageBox.Show("Дата заказа успешно обновлена.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(
-                    $"Ошибка при сохранении даты: {ex.Message}",
-                    "Ошибка сохранения",
-                    MessageBoxButton.OK,
-                    MessageBoxImage.Error);
-            }
+            UpdateGrid();
         }
 
         private void BtnAddItem_Click(object sender, RoutedEventArgs e)
@@ -174,14 +188,16 @@ namespace AkhmetshinChudoShoes
                 }
 
                 var sizes = _context.StockItems
-                        .Where(si => si.ProductID == prod.ProductID && si.QuantityForOrders > 0)
-                        .ToList()
-                        .Select(si => new
-                        {
-                            StockItem = si,
-                            Label = $"{(si.Sizes != null ? si.Sizes.Size.ToString() : "Размер")} (в наличии: {si.QuantityForOrders})"
-                        })
-                        .ToList();
+                    .Where(si => si.ProductID == prod.ProductID)
+                    .ToList()
+                    .Select(si => new { StockItem = si, Available = GetEffectiveStock(si) })
+                    .Where(x => x.Available > 0)
+                    .Select(x => new
+                    {
+                        x.StockItem,
+                        Label = $"{(x.StockItem.Sizes != null ? x.StockItem.Sizes.Size.ToString() : "Размер")} (в наличии: {x.Available})"
+                    })
+                    .ToList();
 
                 cbSizes.DisplayMemberPath = "Label";
                 cbSizes.ItemsSource = sizes;
@@ -219,51 +235,38 @@ namespace AkhmetshinChudoShoes
                 }
 
                 StockItems stockItem = selectedSizeEntry.StockItem;
-                if (stockItem.QuantityForOrders < qty)
+                int available = GetEffectiveStock(stockItem);
+                if (available < qty)
                 {
                     MessageBox.Show(
-                        $"На складе недостаточно пар (доступно: {stockItem.QuantityForOrders}). Уменьшите количество.",
+                        $"На складе недостаточно пар (доступно: {available}). Уменьшите количество.",
                         "Недостаточно остатка",
                         MessageBoxButton.OK,
                         MessageBoxImage.Warning);
                     return;
                 }
 
-                try
+                _removedPositionIds.Remove(stockItem.PositionID);
+
+                var existingOrderProduct = _workingItems.FirstOrDefault(op => op.PositionID == stockItem.PositionID);
+                if (existingOrderProduct != null)
                 {
-                    // Если такая товарная позиция уже есть в заказе — увеличиваем количество вместо дубля
-                    var existingOrderProduct = _context.OrderProducts
-                        .FirstOrDefault(op => op.OrderID == _currentOrder.OrderID && op.PositionID == stockItem.PositionID);
-
-                    if (existingOrderProduct != null)
-                    {
-                        existingOrderProduct.Quantity += qty;
-                    }
-                    else
-                    {
-                        _context.OrderProducts.Add(new OrderProducts
-                        {
-                            OrderID = _currentOrder.OrderID,
-                            PositionID = stockItem.PositionID,
-                            Quantity = qty
-                        });
-                    }
-
-                    stockItem.QuantityForOrders -= qty;
-                    _context.SaveChanges();
-
-                    UpdateGrid();
-                    addDialog.DialogResult = true;
-                    addDialog.Close();
+                    existingOrderProduct.Quantity += qty;
                 }
-                catch (Exception ex)
+                else
                 {
-                    MessageBox.Show(
-                        $"Ошибка при добавлении позиции: {ex.Message}",
-                        "Ошибка сохранения",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
+                    _workingItems.Add(new OrderProducts
+                    {
+                        OrderID = _currentOrder.OrderID,
+                        PositionID = stockItem.PositionID,
+                        StockItems = stockItem,
+                        Quantity = qty
+                    });
                 }
+
+                AddStockDelta(stockItem.PositionID, -qty);
+                UpdateGrid();
+                addDialog.Close();
             };
 
             btnCancel.Click += (s, args) => addDialog.Close();
@@ -285,8 +288,7 @@ namespace AkhmetshinChudoShoes
                 return;
             }
 
-            int itemsCount = _context.OrderProducts.Count(op => op.OrderID == _currentOrder.OrderID);
-            if (itemsCount <= 1)
+            if (_workingItems.Count <= 1)
             {
                 MessageBox.Show("Нельзя удалить последнюю позицию: заказ не может быть пустым.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
@@ -294,27 +296,98 @@ namespace AkhmetshinChudoShoes
 
             if (MessageBox.Show("Удалить выбранную позицию из заказа?", "Подтверждение удаления", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
             {
-                try
+                _workingItems.Remove(selectedItem);
+                if (!_removedPositionIds.Contains(selectedItem.PositionID))
                 {
-                    var stockItem = _context.StockItems.FirstOrDefault(si => si.PositionID == selectedItem.PositionID);
+                    _removedPositionIds.Add(selectedItem.PositionID);
+                }
+
+                AddStockDelta(selectedItem.PositionID, selectedItem.Quantity);
+                UpdateGrid();
+            }
+        }
+
+        private void BtnSaveChanges_Click(object sender, RoutedEventArgs e)
+        {
+            if (_workingItems.Count == 0)
+            {
+                MessageBox.Show("Заказ не может быть пустым.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            if (DatePickerOrder.SelectedDate.HasValue && DatePickerOrder.SelectedDate.Value.Date > DateTime.Now.Date)
+            {
+                MessageBox.Show("Дата заказа не может быть в будущем.", "Ошибка даты", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+
+            try
+            {
+                if (DatePickerOrder.SelectedDate.HasValue)
+                {
+                    _currentOrder.OrderDate = DatePickerOrder.SelectedDate.Value;
+                }
+
+                foreach (int posId in _removedPositionIds)
+                {
+                    var dbEntity = _context.OrderProducts.FirstOrDefault(op =>
+                        op.OrderID == _currentOrder.OrderID && op.PositionID == posId);
+
+                    if (dbEntity != null && _context.Entry(dbEntity).State != EntityState.Detached)
+                    {
+                        _context.OrderProducts.Remove(dbEntity);
+                    }
+                }
+
+                foreach (var item in _workingItems)
+                {
+                    var existingInDb = _context.OrderProducts.FirstOrDefault(op =>
+                        op.OrderID == _currentOrder.OrderID && op.PositionID == item.PositionID);
+
+                    if (existingInDb != null)
+                    {
+                        existingInDb.Quantity = item.Quantity;
+                    }
+                    else
+                    {
+                        _context.OrderProducts.Add(new OrderProducts
+                        {
+                            OrderID = _currentOrder.OrderID,
+                            PositionID = item.PositionID,
+                            Quantity = item.Quantity
+                        });
+                    }
+                }
+
+                foreach (var pair in _stockAdjustments)
+                {
+                    if (pair.Value == 0) continue;
+                    var stockItem = _context.StockItems.FirstOrDefault(si => si.PositionID == pair.Key);
                     if (stockItem != null)
                     {
-                        stockItem.QuantityForOrders += selectedItem.Quantity;
+                        stockItem.QuantityForOrders += pair.Value;
                     }
-
-                    _context.OrderProducts.Remove(selectedItem);
-                    _context.SaveChanges();
-
-                    UpdateGrid();
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(
-                        $"Ошибка при удалении позиции: {ex.Message}",
-                        "Ошибка удаления",
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-                }
+
+                _context.SaveChanges();
+                _removedPositionIds.Clear();
+                _stockAdjustments.Clear();
+                _isSaved = true;
+
+                _workingItems = _context.OrderProducts
+                    .Where(op => op.OrderID == _currentOrder.OrderID)
+                    .ToList();
+
+                UpdateGrid();
+                MessageBox.Show("Изменения состава заказа успешно сохранены.", "Успех", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Ошибка при сохранении изменений: {ex.Message}",
+                    "Ошибка сохранения",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
     }
